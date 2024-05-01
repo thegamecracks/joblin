@@ -45,5 +45,10 @@ class Job:
         return self.scheduler.delete_job(self.id)
 
     def get_seconds_until_start(self) -> float:
-        """Return the amount of time in seconds to wait until the job starts."""
+        """Return the amount of time in seconds to wait until the job starts.
+
+        Note that the returned duration may be negative if the job's start
+        time is overdue.
+
+        """
         return self.starts_at - self.scheduler.time()
