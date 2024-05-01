@@ -1,8 +1,42 @@
+"""
+Start a tkinter GUI and event loop to submit and complete jobs found in job.db.
+"""
+
 import logging
 from tkinter import Text, Tk
 from tkinter.ttk import Button, Frame
+from typing import Any, Callable
 
-from joblin import Scheduler
+from joblin import Job, Scheduler
+
+
+def main() -> None:
+    fmt = "%(levelname)s: %(message)-50s (%(name)s#L%(lineno)d)"
+    logging.basicConfig(format=fmt, level=logging.DEBUG)
+
+    enable_windows_dpi_awareness()
+
+    def job_callback(job: Job) -> None:
+        log_callback(f"Completed job #{job.id}")
+
+    def log_callback(message: str) -> None:
+        text_log.insert("end", message)
+        text_log.see("end")
+
+    with Scheduler.connect("job.db") as scheduler:
+        app = Tk()
+        app.geometry("600x300")
+
+        runner = Runner(app, scheduler, job_callback)
+        # Have our runner check if there's a job to run
+        runner.reschedule()
+
+        controls = SchedulerControls(app, scheduler, runner, log_callback)
+        controls.pack()
+        text_log = Text(app, font="TkDefaultFont")
+        text_log.pack(fill="both", expand=True, padx=10, pady=10)
+
+        app.mainloop()
 
 
 def enable_windows_dpi_awareness() -> None:
@@ -14,94 +48,136 @@ def enable_windows_dpi_awareness() -> None:
         windll.shcore.SetProcessDpiAwareness(2)
 
 
-def main() -> None:
-    fmt = "%(levelname)s: %(message)-50s (%(name)s#L%(lineno)d)"
-    logging.basicConfig(format=fmt, level=logging.DEBUG)
+class Runner:
+    """Run jobs from a scheduler using a tkinter event loop."""
 
-    runner_job_id = None
-    runner_id = None
+    _job_id: int | None
+    """The current job ID scheduled to be run."""
+    _callback_id: str | None
+    """The ID of the command scheduled to be called by tkinter.
 
-    def reschedule_runner():
-        nonlocal runner_job_id, runner_id
+    This is used for cancellation if the runner needs to be rescheduled.
 
-        if runner_id is not None:
-            app.after_cancel(runner_id)
-            runner_id = None
+    """
 
-        job_delay = scheduler.get_seconds_until_next_job()
+    def __init__(
+        self,
+        app: Tk,
+        scheduler: Scheduler,
+        job_callback: Callable[[Job], Any],
+    ) -> None:
+        self.app = app
+        self.scheduler = scheduler
+        self.job_callback = job_callback
+
+        self._job_id = None
+        self._callback_id = None
+
+    def reschedule(self) -> None:
+        """(Re)schedule the runner.
+
+        This should be called once when the runner is first created
+        to check for any existing jobs to run.
+
+        When a new job gets queued in the scheduler, this method should
+        be called to reschedule the runner in case the new job has a
+        higher priority over the previous job.
+
+        """
+        if self._callback_id is not None:
+            self.app.after_cancel(self._callback_id)
+            self._callback_id = None
+
+        job_delay = self.scheduler.get_seconds_until_next_job()
         if job_delay is None:
             return
 
         job_id, job_delay = job_delay
         delay_ms = int(job_delay * 1000)
-        runner_job_id = job_id
-        runner_id = app.after(delay_ms, run_job)
 
-    def run_job():
-        nonlocal runner_id
-        runner_id = None
+        self._job_id = job_id
+        self._callback_id = self.app.after(delay_ms, self._run_job)
 
-        if runner_job_id is None:
+    def _run_job(self) -> None:
+        """Call :attr:`job_callback` with the last scheduled job,
+        mark the job as completed, and reschedule.
+
+        If the job no longer exists, the runner will be rescheduled
+        for the next job.
+
+        """
+        self._callback_id = None
+        if self._job_id is None:
             return
 
-        job = scheduler.get_job_by_id(runner_job_id)
+        job = self.scheduler.get_job_by_id(self._job_id)
         if job is not None and job.completed_at is None:
-            scheduler.complete_job(job.id)
-            write_to_log(f"Completed job #{job.id}")
+            self.job_callback(job)
+            self.scheduler.complete_job(job.id)
 
-        reschedule_runner()
+        self.reschedule()
 
-    def write_to_log(message, end: str = "\n"):
-        message = str(message)
-        text_log.insert("end", message + end)
-        text_log.see("end")
 
-    def check_next_job():
-        job_delay = scheduler.get_seconds_until_next_job()
+class SchedulerControls(Frame):
+    """Various controls for the user to interact with the scheduler."""
+
+    def __init__(
+        self,
+        parent: Tk,
+        scheduler: Scheduler,
+        runner: Runner,
+        log_callback: Callable[[str], Any],
+    ) -> None:
+        super().__init__(parent)
+
+        self.scheduler = scheduler
+        self.runner = runner
+        self.log_callback = log_callback
+
+        self.next = Button(self, text="Check Next Job", command=self.check_next_job)
+        self.next.pack(side="left")
+        self.count = Button(
+            self, text="Count Pending Jobs", command=self.count_pending_jobs
+        )
+        self.count.pack(side="left")
+        self.clear = Button(self, text="Cleanup Jobs", command=self.cleanup_jobs)
+        self.clear.pack(side="left")
+        self.submit = Button(self, text="Submit Job", command=self.submit_job)
+        self.submit.pack(side="left")
+
+    def check_next_job(self) -> None:
+        """Log the time remaining until the next job runs."""
+        job_delay = self.scheduler.get_seconds_until_next_job()
         if job_delay is None:
-            return write_to_log("No job is pending completion.")
+            return self.log("No job is pending completion.")
 
         job_id, job_delay = job_delay
-        write_to_log(f"The next job is #{job_id}, due in {job_delay:.2f} seconds.")
+        self.log(f"The next job is #{job_id}, due in {job_delay:.2f} seconds.")
 
-    def count_pending_jobs():
-        n = scheduler.count_pending_jobs()
-        write_to_log(f"{n} job(s) need to be completed.")
+    def count_pending_jobs(self) -> None:
+        """Log the number of jobs remaining in the scheduler."""
+        n = self.scheduler.count_pending_jobs()
+        self.log(f"{n} job(s) need to be completed.")
 
-    def cleanup_jobs():
-        n_completed = scheduler.delete_completed_jobs()
-        n_expired = scheduler.delete_expired_jobs()
-        write_to_log(
+    def cleanup_jobs(self) -> None:
+        """Clean up any completed and expired jobs from the scheduler."""
+        n_completed = self.scheduler.delete_completed_jobs()
+        n_expired = self.scheduler.delete_expired_jobs()
+        self.log(
             f"{n_completed} completed job(s) and "
             f"{n_expired} expired job(s) were cleaned up."
         )
 
-    def submit_job():
-        job = scheduler.add_job_from_now(None, starts_after=3, expires_after=10)
-        write_to_log(f"Submitted job #{job.id}, expected completion in 3 seconds.")
-        reschedule_runner()
+    def submit_job(self) -> None:
+        """Submit a new job to the scheduler."""
+        job = self.scheduler.add_job_from_now(None, starts_after=3, expires_after=10)
+        self.runner.reschedule()
+        self.log(f"Submitted job #{job.id}, expected completion in 3 seconds.")
 
-    enable_windows_dpi_awareness()
-
-    with Scheduler.connect("job.db") as scheduler:
-        app = Tk()
-        app.geometry("600x300")
-        controls = Frame(app)
-        controls.pack()
-        count = Button(controls, text="Check Next Job", command=check_next_job)
-        count.pack(side="left")
-        count = Button(controls, text="Count Pending Jobs", command=count_pending_jobs)
-        count.pack(side="left")
-        clear = Button(controls, text="Cleanup Jobs", command=cleanup_jobs)
-        clear.pack(side="left")
-        submit = Button(controls, text="Submit Job", command=submit_job)
-        submit.pack(side="left")
-
-        text_log = Text(app, font="TkDefaultFont")
-        text_log.pack(fill="both", expand=True, padx=10, pady=10)
-
-        reschedule_runner()
-        app.mainloop()
+    def log(self, message: Any, end: str = "\n") -> None:
+        """Call :attr:`log_callback` with the given message and end suffix."""
+        message = str(message) + end
+        self.log_callback(message)
 
 
 if __name__ == "__main__":
