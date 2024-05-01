@@ -45,7 +45,7 @@ class Scheduler:
         return self
 
     def __exit__(self, exc_type, exc_val, tb) -> None:
-        self.conn.close()
+        self.close()
 
     def add_job(
         self,
@@ -273,6 +273,10 @@ class Scheduler:
             (now,),
         )
         return c.rowcount
+
+    def close(self) -> None:
+        """Close the scheduler."""
+        self.conn.close()
 
     @classmethod
     def connect(
