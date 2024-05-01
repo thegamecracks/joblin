@@ -12,6 +12,12 @@ log = logging.getLogger(__name__)
 class Scheduler:
     """A scheduler that persists jobs in an SQLite database. Not thread-safe.
 
+    ::
+
+        scheduler = Scheduler.connect("job.db")
+        job = scheduler.add_job("Some payload")
+        scheduler.close()
+
     This class does not directly provide a mechanism for executing jobs,
     but rather expects the caller to retrieve the next job and wait until
     the job can start. As such, it is also the caller's responsibility
@@ -19,7 +25,10 @@ class Scheduler:
     processes.
 
     The scheduler can be used in a context manager to automatically close
-    the database upon exiting.
+    the database upon exiting. For example::
+
+        with Scheduler.connect("job.db") as scheduler:
+            ...
 
     """
 
