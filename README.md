@@ -11,7 +11,7 @@ with Scheduler.connect("job.db") as scheduler:
     scheduler.add_job_from_now(data, expires_after=5.0)
 
     while (job := scheduler.get_next_job()) is not None:
-        time.sleep(job.get_seconds_until_start())
+        time.sleep(max(0, job.get_seconds_until_start()))
         print(f"Received job {job.id} with data: {job.data}")
         job.complete()
 ```
