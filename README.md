@@ -35,6 +35,12 @@ Check out the [examples/] for reference on using the scheduler:
 
 [examples/]: https://github.com/thegamecracks/joblin/tree/main/examples/
 
+## TODO
+
+- [ ] Add more examples (in-memory scheduling, concurrency, asyncio, ...)
+- [ ] Build documentation site
+- [ ] Write tests
+
 ## License
 
 This project is written under the MIT license.
