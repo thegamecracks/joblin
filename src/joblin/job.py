@@ -19,7 +19,7 @@ class Job:
     expires_at: float | None
     completed_at: float | None
 
-    def complete(self, completed_at: float | None) -> bool:
+    def complete(self, completed_at: float | None = None) -> bool:
         """Mark the job as completed.
 
         This is a convenience method for calling :meth:`Scheduler.complete_job()`.
