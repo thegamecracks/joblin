@@ -50,6 +50,33 @@ class Scheduler:
         self.conn = conn
         self.time_func = time_func
 
+    @classmethod
+    def connect(
+        cls,
+        path: str,
+        time_func: Callable[[], float] = time.time,
+        **kwargs,
+    ) -> Self:
+        """Connect and set up an SQLite database at the given path.
+
+        ``:memory:`` can be used instead of a file path to create an
+        in-memory scheduler. In this case, it may be desirable to provide
+        a monotonic time function to avoid abnormal behaviour from
+        the system time changing.
+
+        Extra arguments will be passed to :func:`sqlite3.connect()`.
+
+        :param path: The database path to open.
+        :param time_func: The function used to get the current time.
+        :returns: A new scheduler instance.
+
+        """
+        conn = sqlite3.connect(path, isolation_level=None, **kwargs)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode = WAL")
+        run_default_migrations(conn)
+        return cls(conn, time_func=time_func)
+
     def __enter__(self) -> Self:
         return self
 
@@ -286,33 +313,6 @@ class Scheduler:
     def close(self) -> None:
         """Close the scheduler."""
         self.conn.close()
-
-    @classmethod
-    def connect(
-        cls,
-        path: str,
-        time_func: Callable[[], float] = time.time,
-        **kwargs,
-    ) -> Self:
-        """Connect and set up an SQLite database at the given path.
-
-        ``:memory:`` can be used instead of a file path to create an
-        in-memory scheduler. In this case, it may be desirable to provide
-        a monotonic time function to avoid abnormal behaviour from
-        the system time changing.
-
-        Extra arguments will be passed to :func:`sqlite3.connect()`.
-
-        :param path: The database path to open.
-        :param time_func: The function used to get the current time.
-        :returns: A new scheduler instance.
-
-        """
-        conn = sqlite3.connect(path, isolation_level=None, **kwargs)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode = WAL")
-        run_default_migrations(conn)
-        return cls(conn, time_func=time_func)
 
     # NOTE: defined here to avoid shadowing the time module
     def time(self) -> float:
