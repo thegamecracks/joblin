@@ -45,6 +45,7 @@ Check out the `examples/ <https://github.com/thegamecracks/joblin/tree/main/exam
 for reference on using the scheduler:
 
 .. image:: https://raw.githubusercontent.com/thegamecracks/joblin/main/examples/tkinter_app.png
+   :target: https://github.com/thegamecracks/joblin/tree/main/examples/tkinter_app.py
 
 License
 -------

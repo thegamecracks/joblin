@@ -33,7 +33,7 @@ to start storing jobs. See the [documentation] for more details.
 
 Check out the [examples/] for reference on using the scheduler:
 
-![](https://raw.githubusercontent.com/thegamecracks/joblin/main/examples/tkinter_app.png)
+[![](https://raw.githubusercontent.com/thegamecracks/joblin/main/examples/tkinter_app.png)](https://github.com/thegamecracks/joblin/tree/main/examples/tkinter_app.py)
 
 [examples/]: https://github.com/thegamecracks/joblin/tree/main/examples/
 
