@@ -25,7 +25,9 @@ pip install git+https://github.com/thegamecracks/joblin
 ```
 
 Afterwards, you can import `joblin` and use its `Scheduler` class
-to start storing jobs.
+to start storing jobs. See the [documentation] for more details.
+
+[documentation]: https://thegamecracks.github.io/joblin/
 
 ## Examples
 
