@@ -4,7 +4,7 @@ import time
 from typing import Any, Callable, Self
 
 from .job import Job
-from ._migrations import Migrator
+from ._migrations import run_default_migrations
 
 log = logging.getLogger(__name__)
 
@@ -278,7 +278,7 @@ class Scheduler:
         conn = sqlite3.connect(path, isolation_level=None, **kwargs)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode = WAL")
-        Migrator(conn).run_migrations()
+        run_default_migrations(conn)
         return cls(conn, time_func=time_func)
 
     # NOTE: defined here to avoid shadowing the time module

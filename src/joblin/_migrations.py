@@ -1,52 +1,72 @@
+import importlib.resources
 import logging
+import re
 import sqlite3
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Iterable, Iterator, NamedTuple, Protocol, Self
 
 
 log = logging.getLogger(__name__)
 
-SCHEMA_VERSION_0 = """
-CREATE TABLE IF NOT EXISTS job (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data BLOB,
-    created_at REAL NOT NULL,
-    starts_at REAL NOT NULL,
-    expires_at REAL,
-    completed_at REAL,
-    CONSTRAINT job_must_be_created_before_start CHECK (created_at <= starts_at),
-    CONSTRAINT job_must_start_before_expiration CHECK (expires_at IS NULL OR starts_at <= expires_at)
-);
-CREATE INDEX IF NOT EXISTS ix_job_starts_at_expires_at ON job (starts_at, expires_at);
-"""
-SCHEMA_VERSION_1 = """
-DROP INDEX IF EXISTS ix_job_starts_at_expires_at;
-CREATE INDEX IF NOT EXISTS ix_job_completed_at_expires_at ON job (completed_at, expires_at);
 
-CREATE TABLE IF NOT EXISTS job_schema (key TEXT PRIMARY KEY, value) WITHOUT ROWID;
-INSERT OR IGNORE INTO job_schema (key, value) VALUES ('version', 0);
-"""
+class Migration(NamedTuple):
+    version: int
+    sql: str
+
+
+class Migrations(tuple[Migration, ...]):
+    def after_version(self, version: int) -> Self:
+        """Return a copy of self with only migrations after the given version."""
+        return type(self)(m for m in self if m.version > version)
+
+    def version_exists(self, version: int) -> bool:
+        return any(m.version == version for m in self)
+
+    @classmethod
+    def from_iterable_unsorted(cls, it: Iterable[Migration]) -> Self:
+        return cls(sorted(it, key=lambda m: m.version))
+
+
+class MigrationFinder(Protocol):
+    def discover(self) -> Migrations: ...
+
+
+class JoblinMigrationFinder(MigrationFinder):
+    _FILE_PATTERN = re.compile(r"(\d+)-(.+)\.sql")
+
+    def discover(self) -> Migrations:
+        migrations: list[Migration] = [Migration(version=-1, sql="")]
+
+        assert __package__ is not None
+        path = importlib.resources.files(__package__).joinpath("migrations/")
+
+        for file in path.iterdir():
+            if not file.is_file():
+                continue
+
+            m = self._FILE_PATTERN.fullmatch(file.name)
+            if m is None:
+                continue
+
+            version = int(m[1])
+            sql = file.read_text("utf-8")
+            migrations.append(Migration(version=version, sql=sql))
+
+        return Migrations.from_iterable_unsorted(migrations)
 
 
 class Migrator:
-    MIGRATIONS = (
-        (-1, ""),
-        (0, SCHEMA_VERSION_0),
-        (1, SCHEMA_VERSION_1),
-    )
-
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    def run_migrations(self) -> None:
+    def run_migrations(self, migrations: Migrations) -> None:
         version = self.get_version()
-        if version >= 0 and not any(version == v for v, _ in self.MIGRATIONS):
-            log.warning(
-                "Unrecognized database version %s, scheduler may not work as intended"
-            )
+        if version >= 0 and not migrations.version_exists(version):
+            log.warning("Unrecognized database version %s, skipping migrations")
+            return
 
         with self.begin() as conn:
-            for version, script in self.get_migrations(version):
+            for version, script in migrations.after_version(version):
                 log.debug("Migrating database to v%s", version)
                 conn.executescript(script)
 
@@ -90,10 +110,8 @@ class Migrator:
         else:
             self.conn.commit()
 
-    @classmethod
-    def get_migrations(cls, version: int) -> tuple[tuple[int, str], ...]:
-        i = 0
-        for i, (v, _) in enumerate(cls.MIGRATIONS, start=1):
-            if version == v:
-                break
-        return cls.MIGRATIONS[i:]
+
+def run_default_migrations(conn: sqlite3.Connection) -> None:
+    migrations = JoblinMigrationFinder().discover()
+    migrator = Migrator(conn)
+    migrator.run_migrations(migrations)
