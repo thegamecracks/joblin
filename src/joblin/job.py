@@ -12,12 +12,23 @@ class Job:
     """A job created by the scheduler."""
 
     scheduler: Scheduler
+    """The scheduler associated with this job."""
     id: int
+    """The job's ID stored in the scheduler."""
     data: Any
+    """The payload stored with this job."""
     created_at: float
+    """The time at which this job was created."""
     starts_at: float
+    """The time at which this job should be executed."""
     expires_at: float | None
+    """The time at which this job will expire.
+
+    If None, the job will never expire.
+
+    """
     completed_at: float | None
+    """The time at which this job was completed, or None if not completed."""
 
     def complete(self, completed_at: float | None = None) -> bool:
         """Mark the job as completed.
