@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "joblin"
+description = "An SQLite-based synchronous job scheduler."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "thegamecracks" }]
+license = { text = "MIT" }
+classifiers = []
+dynamic = ["version"]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://github.com/thegamecracks/joblin"
+"Issue Tracker" = "https://github.com/thegamecracks/joblin/issues"
+
+[tool.setuptools_scm]
