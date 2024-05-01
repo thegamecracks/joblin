@@ -8,7 +8,7 @@ from joblin import Scheduler
 
 with Scheduler.connect("job.db") as scheduler:
     data = '{"type": "my-type", "message": "Hello world!"}'
-    scheduler.add_job_from_now(data, expires_after=5.0)
+    scheduler.add_job_from_now(data, starts_after=3.0, expires_after=10.0)
 
     while (job := scheduler.get_next_job()) is not None:
         time.sleep(max(0, job.get_seconds_until_start()))
