@@ -85,6 +85,7 @@ def main() -> None:
 
     with Scheduler.connect("job.db") as scheduler:
         app = Tk()
+        app.geometry("600x300")
         controls = Frame(app)
         controls.pack()
         count = Button(controls, text="Check Next Job", command=check_next_job)
