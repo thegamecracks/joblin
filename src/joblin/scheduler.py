@@ -23,12 +23,21 @@ class Scheduler:
 
     """
 
+    conn: sqlite3.Connection
+    """The SQLite conection used to query for jobs."""
+    time_func: Callable[[], float]
+    """The function used to get the current time."""
+
     def __init__(
         self,
         conn: sqlite3.Connection,
         *,
         time_func: Callable[[], float],
     ) -> None:
+        """
+        :param conn: The SQLite conection used to query for jobs.
+        :param time_func: The function used to get the current time.
+        """
         self.conn = conn
         self.time_func = time_func
 
