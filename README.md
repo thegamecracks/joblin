@@ -21,7 +21,7 @@ with Scheduler.connect("job.db") as scheduler:
 With Python 3.11+ and Git, this library can be installed using:
 
 ```sh
-pip install git+https://github.com/thegamecracks/dum-dum-irc
+pip install git+https://github.com/thegamecracks/joblin
 ```
 
 Afterwards, the `joblin` package should be available to your scripts.
