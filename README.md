@@ -31,3 +31,7 @@ pip install git+https://github.com/thegamecracks/dum-dum-irc
 ```
 
 Afterwards, the `joblin` package should be available to your scripts.
+
+## License
+
+This project is written under the MIT license.
