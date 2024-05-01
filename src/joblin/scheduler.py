@@ -311,7 +311,11 @@ class Scheduler:
         return c.rowcount
 
     def close(self) -> None:
-        """Close the scheduler."""
+        """Close the scheduler.
+
+        .. versionadded:: 0.2.0
+
+        """
         self.conn.close()
 
     # NOTE: defined here to avoid shadowing the time module

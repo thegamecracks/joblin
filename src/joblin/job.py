@@ -42,6 +42,10 @@ class Job:
             Defaults to the scheduler's current time.
         :returns: True if the job was updated, False otherwise.
 
+        .. versionchanged:: 0.1.1
+            ``completed_at`` now defaults to ``None`` as originally implied,
+            rather than being a required parameter.
+
         """
         return self.scheduler.complete_job(self.id, completed_at)
 
