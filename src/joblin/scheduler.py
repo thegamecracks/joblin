@@ -131,7 +131,12 @@ class Scheduler:
         )
 
     def get_job_by_id(self, job_id: int) -> Job | None:
-        """Get a job from the scheduler by ID."""
+        """Get a job from the scheduler by ID.
+
+        :param job_id: The ID of the job.
+        :returns: A job object, or None if not found.
+
+        """
         c = self.conn.execute("SELECT * FROM job WHERE id = ?", (job_id,))
         row = c.fetchone()
         if row is not None:
@@ -218,7 +223,7 @@ class Scheduler:
         :param completed_at:
             The time at which the job was completed.
             Defaults to the current time.
-        :returns: True if the job was updated, False otherwise.
+        :returns: ``True`` if the job was updated, ``False`` otherwise.
 
         """
         completed_at = completed_at or self.time()
@@ -232,7 +237,7 @@ class Scheduler:
         """Delete a job from the scheduler by ID.
 
         :param job_id: The ID of the job.
-        :returns: True if the job existed, False otherwise.
+        :returns: ``True`` if the job existed, ``False`` otherwise.
 
         """
         c = self.conn.execute("DELETE FROM job WHERE id = ?", (job_id,))
@@ -244,6 +249,7 @@ class Scheduler:
         :param now:
             The current time.
             Defaults to the current time.
+        :returns: The number of jobs that were deleted.
 
         """
         c = self.conn.execute("DELETE FROM job WHERE completed_at IS NOT NULL")
@@ -257,6 +263,7 @@ class Scheduler:
         :param now:
             The current time.
             Defaults to the current time.
+        :returns: The number of jobs that were deleted.
 
         """
         now = now or self.time()
@@ -282,6 +289,10 @@ class Scheduler:
         the system time changing.
 
         Extra arguments will be passed to :func:`sqlite3.connect()`.
+
+        :param path: The database path to open.
+        :param time_func: The function used to get the current time.
+        :returns: A new scheduler instance.
 
         """
         conn = sqlite3.connect(path, isolation_level=None, **kwargs)
