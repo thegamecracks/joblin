@@ -40,7 +40,7 @@ class Job:
         :param completed_at:
             The time at which the job was completed.
             Defaults to the scheduler's current time.
-        :returns: True if the job was updated, False otherwise.
+        :returns: ``True`` if the job was updated, ``False`` otherwise.
 
         .. versionchanged:: 0.1.1
             ``completed_at`` now defaults to ``None`` as originally implied,
@@ -54,7 +54,7 @@ class Job:
 
         This is a convenience method for calling :meth:`Scheduler.delete_job()`.
 
-        :returns: True if the job existed, False otherwise.
+        :returns: ``True`` if the job existed, ``False`` otherwise.
 
         """
         return self.scheduler.delete_job(self.id)
