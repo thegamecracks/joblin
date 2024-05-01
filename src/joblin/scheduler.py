@@ -88,7 +88,7 @@ class Scheduler:
         self,
         data: Any,
         *,
-        starts_after: float,
+        starts_after: float = 0.0,
         expires_after: float | None = None,
         created_at: float | None = None,
     ) -> Job:
