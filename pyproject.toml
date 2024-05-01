@@ -13,6 +13,13 @@ classifiers = []
 dynamic = ["version"]
 dependencies = []
 
+[project.optional-dependencies]
+docs = [
+    "Sphinx>=7.3.7",
+    "autoclasstoc>=1.6.0",
+    "furo>=2024.4.27",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/thegamecracks/joblin"
 "Issue Tracker" = "https://github.com/thegamecracks/joblin/issues"
