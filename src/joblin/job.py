@@ -37,6 +37,9 @@ class Job:
 
         If the job does not exist, this is a no-op.
 
+        Note that calling this method does not change the
+        :attr:`completed_at` attribute.
+
         :param completed_at:
             The time at which the job was completed.
             Defaults to the scheduler's current time.
