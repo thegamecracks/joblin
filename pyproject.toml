@@ -19,10 +19,24 @@ docs = [
     "autoclasstoc>=1.6.0",
     "furo>=2024.4.27",
 ]
-tests = ["pytest>=8.2.0"]
+tests = ["coverage>=7.5.0", "pytest>=8.2.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/thegamecracks/joblin"
 "Issue Tracker" = "https://github.com/thegamecracks/joblin/issues"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if (typing\\.)?TYPE_CHECKING:",
+    "if __name__ == \"__main__\":",
+    "\\s*\\.\\.\\.$",
+    "raise NotImplementedError",
+    "def __repr__",
+]
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["joblin"]
 
 [tool.setuptools_scm]
