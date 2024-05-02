@@ -34,8 +34,10 @@ Joblin is a simple, SQLite-based, synchronous, Python job scheduler library.
          job.complete()
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :hidden:
+
+   changelog
 
 Usage
 -----
