@@ -19,8 +19,8 @@ def main() -> None:
     def job_callback(job: Job) -> None:
         log_callback(f"Completed job #{job.id}")
 
-    def log_callback(message: str) -> None:
-        text_log.insert("end", message)
+    def log_callback(message: object) -> None:
+        text_log.insert("end", f"{message}\n")
         text_log.see("end")
 
     with Scheduler.connect("job.db") as scheduler:
@@ -126,7 +126,7 @@ class SchedulerControls(Frame):
         parent: Tk,
         scheduler: Scheduler,
         runner: Runner,
-        log_callback: Callable[[str], Any],
+        log_callback: Callable[[object], Any],
     ) -> None:
         super().__init__(parent)
 
@@ -174,9 +174,8 @@ class SchedulerControls(Frame):
         self.runner.reschedule()
         self.log(f"Submitted job #{job.id}, expected completion in 3 seconds.")
 
-    def log(self, message: Any, end: str = "\n") -> None:
+    def log(self, message: object) -> None:
         """Call :attr:`log_callback` with the given message and end suffix."""
-        message = str(message) + end
         self.log_callback(message)
 
 
