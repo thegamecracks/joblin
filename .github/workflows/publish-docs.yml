@@ -24,7 +24,7 @@ jobs:
           cache-dependency-path: pyproject.toml
           python-version-file: pyproject.toml
 
-      - run: pip install .[docs]
+      - run: pip install .[docs,tests]
       - run: make html
         working-directory: docs
 

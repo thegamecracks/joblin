@@ -19,6 +19,7 @@ docs = [
     "autoclasstoc>=1.6.0",
     "furo>=2024.4.27",
 ]
+tests = ["pytest>=8.2.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/thegamecracks/joblin"
