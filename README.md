@@ -28,7 +28,7 @@ With Python 3.11+ and Git, this library can be installed using:
 pip install git+https://github.com/thegamecracks/joblin
 ```
 
-Afterwards, you can import `joblin` and use its `Scheduler` class
+Afterwards you can import `joblin` and use the `Scheduler` class
 to start storing jobs. See the [documentation] for more details.
 
 [documentation]: https://thegamecracks.github.io/joblin/
