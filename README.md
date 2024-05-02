@@ -44,8 +44,6 @@ Check out the [examples/] for reference on using the scheduler:
 ## TODO
 
 - [ ] Add more examples (in-memory scheduling, concurrency, asyncio, ...)
-- [ ] Build documentation site
-- [ ] Write tests
 
 ## License
 
