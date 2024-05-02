@@ -10,6 +10,9 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
+v0.2.1 - 2024-05-02
+-------------------
+
 This release includes more documentation enhancements and test coverage.
 
 Fixed
