@@ -20,7 +20,9 @@ def main() -> None:
         log_callback(f"Completed job #{job.id}")
 
     def log_callback(message: object) -> None:
+        text_log.configure(state="normal")
         text_log.insert("end", f"{message}\n")
+        text_log.configure(state="disabled")
         text_log.see("end")
 
     with Scheduler.connect("job.db") as scheduler:
@@ -33,7 +35,7 @@ def main() -> None:
 
         controls = SchedulerControls(app, scheduler, runner, log_callback)
         controls.pack()
-        text_log = Text(app, font="TkDefaultFont")
+        text_log = Text(app, font="TkDefaultFont", state="disabled")
         text_log.pack(fill="both", expand=True, padx=10, pady=10)
 
         app.mainloop()
