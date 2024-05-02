@@ -6,6 +6,17 @@
 Welcome to Joblin!
 ==================
 
+|pyright-workflow| |pytest-workflow| |docs-workflow|
+
+.. |pyright-workflow| image:: https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/pyright-lint.yml?style=flat-square&label=pyright
+   :target: https://microsoft.github.io/pyright/#/
+
+.. |pytest-workflow| image:: https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/python-test.yml?style=flat-square&logo=pytest&label=tests
+   :target: https://docs.pytest.org/en/stable/
+
+.. |docs-workflow| image:: https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/publish-docs.yml?style=flat-square&logo=github&label=docs
+   :target: https://thegamecracks.github.io/joblin/
+
 Joblin is a simple, SQLite-based, synchronous, Python job scheduler library.
 
 .. code-block:: python

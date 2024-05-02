@@ -1,5 +1,9 @@
 # joblin
 
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/pyright-lint.yml?style=flat-square&label=pyright)](https://microsoft.github.io/pyright/#/)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/python-test.yml?style=flat-square&logo=pytest&label=tests)](https://docs.pytest.org/en/stable/)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/publish-docs.yml?style=flat-square&logo=github&label=docs)](https://thegamecracks.github.io/joblin/)
+
 A simple, SQLite-based, synchronous, Python job scheduler library.
 
 ```py
