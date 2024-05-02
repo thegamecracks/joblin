@@ -215,6 +215,29 @@ def test_scheduler_job_ids_not_reused(scheduler: Scheduler):
     assert job4.id == 4
 
 
+def test_scheduler_next_job_ordered_by_id(scheduler: Scheduler):
+    jobs = [scheduler.add_job(DATA) for _ in range(100)]
+    for job in jobs:
+        assert scheduler.get_next_job() == job
+        assert scheduler.get_seconds_until_next_job() == (job.id, 0)
+        scheduler.delete_job(job.id)
+
+
+def test_scheduler_next_job_ordered_by_id_reversed(scheduler: Scheduler):
+    for id_ in range(100, 0, -1):
+        scheduler.conn.execute(
+            "INSERT INTO job (id, created_at, starts_at) VALUES (?, 0, 0)",
+            (id_,),
+        )
+
+    for id_ in range(1, 101):
+        job = scheduler.get_next_job()
+        assert job is not None
+        assert job.id == id_
+        assert scheduler.get_seconds_until_next_job() == (id_, 0)
+        scheduler.delete_job(id_)
+
+
 def test_scheduler_time_func(scheduler: Scheduler):
     def time_func() -> float:
         return current_time

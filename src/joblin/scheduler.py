@@ -186,6 +186,9 @@ class Scheduler:
     def get_next_job(self, now: float | None = None) -> Job | None:
         """Get the next job in the scheduler.
 
+        If two jobs start at the same time, the job with the
+        lower ID gets priority.
+
         :param now:
             The current time.
             Defaults to the current time.
@@ -198,7 +201,7 @@ class Scheduler:
         c = self.conn.execute(
             "SELECT * FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at)"
-            "ORDER BY starts_at LIMIT 1",
+            "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
         row = c.fetchone()
@@ -234,7 +237,7 @@ class Scheduler:
         c = self.conn.execute(
             "SELECT id, starts_at FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at)"
-            "ORDER BY starts_at LIMIT 1",
+            "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
         row = c.fetchone()

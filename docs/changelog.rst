@@ -10,6 +10,15 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
+Changed
+^^^^^^^
+
+- :meth:`Scheduler.get_next_job() <joblin.Scheduler.get_next_job>`
+  and :meth:`Scheduler.get_seconds_until_next_job() <joblin.Scheduler.get_seconds_until_next_job>`
+  are now guaranteed to return the job with the smaller ID if two jobs
+  started at the same time. Previously this was not part of the database
+  query, making the ordering reliant on SQLite's implementation details.
+
 v0.2.1 - 2024-05-02
 -------------------
 
