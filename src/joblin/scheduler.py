@@ -110,8 +110,11 @@ class Scheduler:
             The start or expiration time was invalid.
 
         """
-        created_at = created_at or self.time()
-        starts_at = starts_at or created_at
+        if created_at is None:
+            created_at = self.time()
+        if starts_at is None:
+            starts_at = created_at
+
         job_id: int = self.conn.execute(
             "INSERT INTO job (data, created_at, starts_at, expires_at) "
             "VALUES (?, ?, ?, ?) "
@@ -155,7 +158,9 @@ class Scheduler:
             The start or expiration time was invalid.
 
         """
-        created_at = created_at or self.time()
+        if created_at is None:
+            created_at = self.time()
+
         starts_at = created_at + starts_after
         expires_at = None if expires_after is None else created_at + expires_after
 
@@ -187,7 +192,9 @@ class Scheduler:
         :returns: The next job to be completed, if any.
 
         """
-        now = now or self.time()
+        if now is None:
+            now = self.time()
+
         c = self.conn.execute(
             "SELECT * FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at)"
@@ -221,7 +228,9 @@ class Scheduler:
         :returns: The next job's ID and delay, or None if no job is pending.
 
         """
-        now = now or self.time()
+        if now is None:
+            now = self.time()
+
         c = self.conn.execute(
             "SELECT id, starts_at FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at)"
@@ -242,7 +251,9 @@ class Scheduler:
 
         """
         # Similar query to get_next_job()
-        now = now or self.time()
+        if now is None:
+            now = self.time()
+
         c = self.conn.execute(
             "SELECT COUNT(*) FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at)",
@@ -262,7 +273,9 @@ class Scheduler:
         :returns: ``True`` if the job was updated, ``False`` otherwise.
 
         """
-        completed_at = completed_at or self.time()
+        if completed_at is None:
+            completed_at = self.time()
+
         c = self.conn.execute(
             "UPDATE job SET completed_at = ? WHERE id = ?",
             (completed_at, job_id),
@@ -302,7 +315,9 @@ class Scheduler:
         :returns: The number of jobs that were deleted.
 
         """
-        now = now or self.time()
+        if now is None:
+            now = self.time()
+
         c = self.conn.execute(
             "DELETE FROM job WHERE completed_at IS NULL "
             "AND expires_at IS NOT NULL AND ? >= expires_at",
