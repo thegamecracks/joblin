@@ -119,12 +119,12 @@ def test_scheduler_get_next_job_delay(scheduler: Scheduler):
 
     job1 = scheduler.add_job(DATA, created_at=0, starts_at=2, expires_at=4)
     for i in range(4):
-        assert scheduler.get_next_job_delay(now=i) == (job1.id, 2 - i)
+        assert scheduler.get_next_job_delay(now=i) == (job1.id, max(0.0, 2 - i))
     assert scheduler.get_next_job_delay(now=4) is None
 
     job2 = scheduler.add_job(DATA, created_at=0, starts_at=1, expires_at=None)
     for i in range(5):
-        assert scheduler.get_next_job_delay(now=i) == (job2.id, 1 - i)
+        assert scheduler.get_next_job_delay(now=i) == (job2.id, max(0.0, 1 - i))
 
     scheduler.delete_job(job1.id)
     scheduler.delete_job(job2.id)

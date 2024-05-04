@@ -221,8 +221,7 @@ class Scheduler:
         This reduces unnecessary I/O compared to :meth:`get_next_job()`
         when only the time is needed.
 
-        Note that the returned duration may be negative if the job's start
-        time is overdue.
+        If the job's start time is overdue, the delay will be 0.
 
         To avoid race conditions in cases where the job's start and
         expiration time are equal, the job object should be retrieved with
@@ -248,7 +247,7 @@ class Scheduler:
         )
         row = c.fetchone()
         if row is not None:
-            return row[0], row[1] - now
+            return row[0], max(0.0, row[1] - now)
 
     def count_pending_jobs(self, now: float | None = None) -> int:
         """Count the number of jobs that need to run.
@@ -358,8 +357,7 @@ class Scheduler:
         This reduces unnecessary I/O compared to :meth:`lock_next_job()`
         when only the time is needed.
 
-        Note that the returned duration may be negative if the job's start
-        time is overdue.
+        If the job's start time is overdue, the delay will be 0.
 
         To avoid race conditions in cases where the job's start and
         expiration time are equal, the job object should be retrieved with
@@ -389,7 +387,7 @@ class Scheduler:
                 return None
 
             c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (now, row[0]))
-            return row[0], row[1] - now
+            return row[0], max(0.0, row[1] - now)
 
     def unlock_job(self, job_id: int) -> bool:
         """Attempt to unlock the given job.

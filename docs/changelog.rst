@@ -40,6 +40,10 @@ Changed
 - BREAKING CHANGE:
   Renamed ``Scheduler.get_seconds_until_next_job()``
   to :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
+- BREAKING CHANGE:
+  Job and Scheduler delay methods can no longer return negative delays.
+  This is to simplify usage for end users. If a negative delay is still
+  desired, users will have to do ``job.starts_at - scheduler.time()``.
 - :meth:`Scheduler.get_next_job() <joblin.Scheduler.get_next_job>`
   and :meth:`Scheduler.get_seconds_until_next_job() <joblin.Scheduler.get_seconds_until_next_job>`
   are now guaranteed to return the job with the smaller ID if two jobs
