@@ -42,9 +42,10 @@ Changed
 ^^^^^^^
 
 - BREAKING CHANGE:
-  Job and Scheduler delay methods can no longer return negative delays.
-  This is to simplify usage for end users. If a negative delay is still
-  desired, users will have to do ``job.starts_at - scheduler.time()``.
+  Job and Scheduler delay methods no longer return negative delays
+  to simplify usage for end users. If a negative delay is still
+  desired to know how overdue a job is, users will have to do
+  ``job.starts_at - scheduler.time()`` instead.
 - :meth:`Scheduler.get_next_job() <joblin.Scheduler.get_next_job>`
   and :meth:`Scheduler.get_seconds_until_next_job() <joblin.Scheduler.get_seconds_until_next_job>`
   are now guaranteed to return the job with the smaller ID if two jobs
