@@ -25,7 +25,7 @@ def main() -> None:
 
 @contextmanager
 def fail_fast_shutdown(executor: Executor) -> Iterator[Executor]:
-    # The default behaviour for executors is to shut down
+    # The default exception behaviour for executors is to shut down
     # without cancelling futures. Since our jobs are persistent,
     # it's fine to cancel pending futures and shut down more quickly.
     with executor:
