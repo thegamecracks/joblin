@@ -14,8 +14,10 @@ from joblin import Job, Scheduler
 def main() -> None:
     scheduler_factory = lambda: Scheduler.connect("job.db")
     executor = ThreadPoolExecutor(max_workers=3)
+
     with scheduler_factory() as main_scheduler, fail_fast_shutdown(executor):
         submit_jobs(main_scheduler)
+
         runner = Runner(main_scheduler, scheduler_factory, executor)
         runner.run_pending_jobs()
 
