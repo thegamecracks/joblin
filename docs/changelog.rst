@@ -10,6 +10,29 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
+This release provides preliminary support for locking jobs so that
+multiple workers can concurrently consume jobs from the database.
+However, users must opt into locking with the new methods provided.
+
+This locking mechanism is entirely experimental. For now, the scheduler
+does not provide a context manager to lock and unlock jobs, which poses
+a risk of leaving jobs deadlocked.
+
+See `examples/thread_pool.py`_ for a demonstration of the new API.
+
+.. _examples/thread_pool.py: https://github.com/thegamecracks/joblin/blob/main/examples/thread_pool.py
+
+Added
+^^^^^
+
+- :meth:`Scheduler.lock_job() <joblin.Scheduler.lock_job>`
+- :meth:`Scheduler.lock_next_job() <joblin.Scheduler.lock_next_job>`
+- :meth:`Scheduler.lock_and_get_seconds_until_next_job() <joblin.Scheduler.lock_and_get_seconds_until_next_job>`
+- :meth:`Scheduler.unlock_job() <joblin.Scheduler.unlock_job>`
+- :attr:`Job.locked_at <joblin.Job.locked_at>`
+- :attr:`Job.lock() <joblin.Job.lock>`
+- :attr:`Job.unlock() <joblin.Job.unlock>`
+
 Changed
 ^^^^^^^
 

@@ -282,6 +282,8 @@ class Scheduler:
             Defaults to the current time.
         :returns: ``True`` if the job was locked, ``False`` otherwise.
 
+        .. versionadded:: unreleased
+
         """
         if locked_at is None:
             locked_at = self.time()
@@ -314,6 +316,8 @@ class Scheduler:
             The current time.
             Defaults to the current time.
         :returns: The next job to be completed, if any.
+
+        .. versionadded:: unreleased
 
         """
         if now is None:
@@ -364,6 +368,8 @@ class Scheduler:
             Defaults to the current time.
         :returns: The next job's ID and delay, or None if no job is pending.
 
+        .. versionadded:: unreleased
+
         """
         if now is None:
             now = self.time()
@@ -393,6 +399,8 @@ class Scheduler:
 
         :param job_id: The ID of the job.
         :returns: ``True`` if the job was unlocked, ``False`` otherwise.
+
+        .. versionadded:: unreleased
 
         """
         c = self.conn.execute(

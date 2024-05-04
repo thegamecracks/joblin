@@ -36,7 +36,11 @@ class Job:
     completed_at: float | None
     """The time at which this job was completed, or None if not completed."""
     locked_at: float | None
-    """The time at which this job was locked, or None if not locked."""
+    """The time at which this job was locked, or None if not locked.
+
+    .. versionadded:: unreleased
+
+    """
 
     def complete(self, completed_at: float | None = None) -> bool:
         """Mark the job as completed.
@@ -85,6 +89,8 @@ class Job:
             Defaults to the current time.
         :returns: ``True`` if the job was locked, ``False`` otherwise.
 
+        .. versionadded:: unreleased
+
         """
         return self.scheduler.lock_job(self.id, locked_at=locked_at)
 
@@ -100,6 +106,8 @@ class Job:
 
         :param job_id: The ID of the job.
         :returns: ``True`` if the job was unlocked, ``False`` otherwise.
+
+        .. versionadded:: unreleased
 
         """
         return self.scheduler.unlock_job(self.id)
