@@ -299,6 +299,90 @@ class Scheduler:
             c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (locked_at, job_id))
             return True
 
+    def lock_next_job(self, now: float | None = None) -> Job | None:
+        """Get and lock the next job in the scheduler.
+
+        This should be preferred over manually calling :meth:`get_next_job()`
+        and :meth:`lock_job()` as this method will do both in a single
+        transaction, reducing the chance of other connections trying
+        to lock the same job.
+
+        If two jobs start at the same time, the job with the
+        lower ID gets priority.
+
+        :param now:
+            The current time.
+            Defaults to the current time.
+        :returns: The next job to be completed, if any.
+
+        """
+        if now is None:
+            now = self.time()
+
+        with self._begin("IMMEDIATE"):
+            c = self.conn.execute(
+                "SELECT * FROM job WHERE completed_at IS NULL "
+                "AND (expires_at IS NULL OR ? < expires_at) "
+                "AND locked_at IS NULL "
+                "ORDER BY starts_at, id LIMIT 1",
+                (now,),
+            )
+            row = c.fetchone()
+            if row is None:
+                return None
+
+            job = Job(self, **row)
+            job.locked_at = now
+
+            c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (now, job.id))
+            return job
+
+    def lock_and_get_seconds_until_next_job(
+        self,
+        now: float | None = None,
+    ) -> tuple[int, float] | None:
+        """Lock the next job and return its ID and the amount of time
+        in seconds to wait until it starts.
+
+        This should be preferred over manually calling :meth:`get_next_job()`
+        and :meth:`lock_job()` as this method will do both in a single
+        transaction, reducing the chance of other connections trying
+        to lock the same job.
+
+        This reduces unnecessary I/O compared to :meth:`lock_next_job()`
+        when only the time is needed.
+
+        Note that the returned duration may be negative if the job's start
+        time is overdue.
+
+        To avoid race conditions in cases where the job's start and
+        expiration time are equal, the job object should be retrieved with
+        :meth:`get_job_by_id()` rather than calling :meth:`get_next_job()`.
+
+        :param now:
+            The current time.
+            Defaults to the current time.
+        :returns: The next job's ID and delay, or None if no job is pending.
+
+        """
+        if now is None:
+            now = self.time()
+
+        with self._begin("IMMEDIATE"):
+            c = self.conn.execute(
+                "SELECT id, starts_at FROM job WHERE completed_at IS NULL "
+                "AND (expires_at IS NULL OR ? < expires_at) "
+                "AND locked_at IS NULL "
+                "ORDER BY starts_at, id LIMIT 1",
+                (now,),
+            )
+            row = c.fetchone()
+            if row is None:
+                return None
+
+            c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (now, row[0]))
+            return row[0], row[1] - now
+
     def unlock_job(self, job_id: int) -> bool:
         """Attempt to unlock the given job.
 
