@@ -1,4 +1,4 @@
-"""Starts a thread pool executor to complete jobs concurrently.
+"""Start a thread pool executor to complete jobs concurrently.
 
 Here, the main thread reads from the queue and submits jobs to worker
 threads. For reading from multiple threads, see threads.py.

@@ -1,6 +1,7 @@
-"""Starts multiple threads to complete jobs concurrently.
+"""Start multiple threads to complete jobs concurrently.
 
-Each thread will concurrently read jobs from the queue.
+Here, each thread concurrently reads jobs from the queue
+For reading jobs only from the main thread, see thread_pool.py.
 
 """
 
