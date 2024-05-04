@@ -9,7 +9,13 @@ if TYPE_CHECKING:
 
 @dataclass
 class Job:
-    """A job created by the scheduler."""
+    """A job created by the scheduler.
+
+    Any methods here that call the scheduler are not thread-safe.
+    If querying from another thread is desired, you must create a
+    new connection and scheduler.
+
+    """
 
     scheduler: Scheduler
     """The scheduler associated with this job."""
