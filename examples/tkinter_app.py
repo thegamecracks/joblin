@@ -7,7 +7,7 @@ from tkinter import Text, Tk
 from tkinter.ttk import Button, Frame
 from typing import Any, Callable
 
-from joblin import Job, Scheduler
+from joblin import Job, Queue
 
 
 def main() -> None:
@@ -25,15 +25,15 @@ def main() -> None:
         text_log.configure(state="disabled")
         text_log.see("end")
 
-    with Scheduler.connect("job.db") as scheduler:
+    with Queue.connect("job.db") as queue:
         app = Tk()
         app.geometry("600x300")
 
-        runner = Runner(app, scheduler, job_callback)
+        runner = Runner(app, queue, job_callback)
         # Have our runner check if there's a job to run
         runner.reschedule()
 
-        controls = SchedulerControls(app, scheduler, runner, log_callback)
+        controls = QueueControls(app, queue, runner, log_callback)
         controls.pack()
         text_log = Text(app, font="TkDefaultFont", state="disabled")
         text_log.pack(fill="both", expand=True, padx=10, pady=10)
@@ -51,7 +51,7 @@ def enable_windows_dpi_awareness() -> None:
 
 
 class Runner:
-    """Run jobs from a scheduler using a tkinter event loop."""
+    """Run jobs from a queue using a tkinter event loop."""
 
     _job_id: int | None
     """The current job ID scheduled to be run."""
@@ -65,11 +65,11 @@ class Runner:
     def __init__(
         self,
         app: Tk,
-        scheduler: Scheduler,
+        queue: Queue,
         job_callback: Callable[[Job], Any],
     ) -> None:
         self.app = app
-        self.scheduler = scheduler
+        self.queue = queue
         self.job_callback = job_callback
 
         self._job_id = None
@@ -81,7 +81,7 @@ class Runner:
         This should be called once when the runner is first created
         to check for any existing jobs to run.
 
-        When a new job gets queued in the scheduler, this method should
+        When a new job gets queued in the queue, this method should
         be called to reschedule the runner in case the new job has a
         higher priority over the previous job.
 
@@ -90,7 +90,7 @@ class Runner:
             self.app.after_cancel(self._callback_id)
             self._callback_id = None
 
-        job_delay = self.scheduler.get_next_job_delay()
+        job_delay = self.queue.get_next_job_delay()
         if job_delay is None:
             return
 
@@ -112,27 +112,27 @@ class Runner:
         if self._job_id is None:
             return
 
-        job = self.scheduler.get_job_by_id(self._job_id)
+        job = self.queue.get_job_by_id(self._job_id)
         if job is not None and job.completed_at is None:
             self.job_callback(job)
-            self.scheduler.complete_job(job.id)
+            self.queue.complete_job(job.id)
 
         self.reschedule()
 
 
-class SchedulerControls(Frame):
-    """Various controls for the user to interact with the scheduler."""
+class QueueControls(Frame):
+    """Various controls for the user to interact with the queue."""
 
     def __init__(
         self,
         parent: Tk,
-        scheduler: Scheduler,
+        queue: Queue,
         runner: Runner,
         log_callback: Callable[[object], Any],
     ) -> None:
         super().__init__(parent)
 
-        self.scheduler = scheduler
+        self.queue = queue
         self.runner = runner
         self.log_callback = log_callback
 
@@ -149,7 +149,7 @@ class SchedulerControls(Frame):
 
     def check_next_job(self) -> None:
         """Log the time remaining until the next job runs."""
-        job_delay = self.scheduler.get_next_job_delay()
+        job_delay = self.queue.get_next_job_delay()
         if job_delay is None:
             return self.log("No job is pending completion.")
 
@@ -157,22 +157,22 @@ class SchedulerControls(Frame):
         self.log(f"The next job is #{job_id}, due in {delay:.2f} seconds.")
 
     def count_pending_jobs(self) -> None:
-        """Log the number of jobs remaining in the scheduler."""
-        n = self.scheduler.count_pending_jobs()
+        """Log the number of jobs remaining in the queue."""
+        n = self.queue.count_pending_jobs()
         self.log(f"{n} job(s) need to be completed.")
 
     def cleanup_jobs(self) -> None:
-        """Clean up any completed and expired jobs from the scheduler."""
-        n_completed = self.scheduler.delete_completed_jobs()
-        n_expired = self.scheduler.delete_expired_jobs()
+        """Clean up any completed and expired jobs from the queue."""
+        n_completed = self.queue.delete_completed_jobs()
+        n_expired = self.queue.delete_expired_jobs()
         self.log(
             f"{n_completed} completed job(s) and "
             f"{n_expired} expired job(s) were cleaned up."
         )
 
     def submit_job(self) -> None:
-        """Submit a new job to the scheduler."""
-        job = self.scheduler.add_job_from_now(None, starts_after=3, expires_after=10)
+        """Submit a new job to the queue."""
+        job = self.queue.add_job_from_now(None, starts_after=3, expires_after=10)
         self.runner.reschedule()
         self.log(f"Submitted job #{job.id}, expected completion in 3 seconds.")
 

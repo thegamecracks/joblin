@@ -5,22 +5,22 @@ from typing import Iterator
 import pytest
 from pytest import FixtureRequest
 
-from joblin import Scheduler
+from joblin import Queue
 
 
 @pytest.fixture(params=["memory", "file"])
-def scheduler(request: FixtureRequest, tmp_path: Path) -> Iterator[Scheduler]:
+def queue(request: FixtureRequest, tmp_path: Path) -> Iterator[Queue]:
     if request.param == "memory":
-        scheduler = Scheduler.connect(":memory:", time_func=lambda: 0)
+        queue = Queue.connect(":memory:", time_func=lambda: 0)
     elif request.param == "file":
         db = str(tmp_path / "job.db")
-        scheduler = Scheduler.connect(db, time_func=lambda: 0)
+        queue = Queue.connect(db, time_func=lambda: 0)
     else:
         raise ValueError(f"unexpected param {request.param!r}")
 
     try:
-        with scheduler:
-            yield scheduler
+        with queue:
+            yield queue
     finally:
         with pytest.raises(sqlite3.ProgrammingError):
-            scheduler.conn.execute("SELECT 1")
+            queue.conn.execute("SELECT 1")

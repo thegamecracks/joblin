@@ -14,12 +14,14 @@ This release provides preliminary support for locking jobs so that
 multiple workers can concurrently consume jobs from the database.
 However, users must opt into locking with the new methods provided.
 
-This locking mechanism is entirely experimental. For now, the scheduler
+This locking mechanism is entirely experimental. For now, the queue
 does not provide a context manager to lock and unlock jobs, which poses
 a risk of leaving jobs deadlocked.
 
 See `examples/thread_pool.py`_ and `examples/threads.py`_ for demonstrations
 of the new API.
+
+``Scheduler`` has been renamed to :class:`~joblin.Queue` to better reflect its purpose.
 
 .. _examples/thread_pool.py: https://github.com/thegamecracks/joblin/blob/main/examples/thread_pool.py
 .. _examples/threads.py: https://github.com/thegamecracks/joblin/blob/main/examples/threads.py
@@ -27,12 +29,13 @@ of the new API.
 Added
 ^^^^^
 
-- :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
-  (replaces ``Scheduler.get_seconds_until_next_job()``)
-- :meth:`Scheduler.lock_job() <joblin.Scheduler.lock_job>`
-- :meth:`Scheduler.lock_next_job() <joblin.Scheduler.lock_next_job>`
-- :meth:`Scheduler.lock_next_job_delay() <joblin.Scheduler.lock_next_job_delay>`
-- :meth:`Scheduler.unlock_job() <joblin.Scheduler.unlock_job>`
+- :class:`Queue <joblin.Queue>` (renamed from ``Scheduler``)
+- :meth:`Queue.get_next_job_delay() <joblin.Queue.get_next_job_delay>`
+  (replaces ``Queue.get_seconds_until_next_job()``)
+- :meth:`Queue.lock_job() <joblin.Queue.lock_job>`
+- :meth:`Queue.lock_next_job() <joblin.Queue.lock_next_job>`
+- :meth:`Queue.lock_next_job_delay() <joblin.Queue.lock_next_job_delay>`
+- :meth:`Queue.unlock_job() <joblin.Queue.unlock_job>`
 - :attr:`Job.locked_at <joblin.Job.locked_at>`
 - :meth:`Job.lock() <joblin.Job.lock>`
 - :meth:`Job.unlock() <joblin.Job.unlock>`
@@ -42,12 +45,12 @@ Changed
 ^^^^^^^
 
 - BREAKING CHANGE:
-  Job and Scheduler delay methods no longer return negative delays
+  Job and Queue delay methods no longer return negative delays
   to simplify usage for end users. If a negative delay is still
   desired to know how overdue a job is, users will have to do
-  ``job.starts_at - scheduler.time()`` instead.
-- :meth:`Scheduler.get_next_job() <joblin.Scheduler.get_next_job>`
-  and :meth:`Scheduler.get_seconds_until_next_job() <joblin.Scheduler.get_seconds_until_next_job>`
+  ``job.starts_at - queue.time()`` instead.
+- :meth:`Queue.get_next_job() <joblin.Queue.get_next_job>`
+  and :meth:`Queue.get_seconds_until_next_job() <joblin.Queue.get_seconds_until_next_job>`
   are now guaranteed to return the job with the smaller ID if two jobs
   started at the same time. Previously this was not part of the database
   query, making the ordering reliant on SQLite's implementation details.
@@ -55,8 +58,9 @@ Changed
 Removed
 ^^^^^^^
 
-- ``Scheduler.get_seconds_until_next_job()`` in favour of
-  :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
+- ``Scheduler`` (renamed to :class:`~joblin.Queue`)
+- ``Queue.get_seconds_until_next_job()`` in favour of
+  :meth:`Queue.get_next_job_delay() <joblin.Queue.get_next_job_delay>`
 - ``Job.get_seconds_until_start()`` in favour of :attr:`Job.delay <joblin.Job.delay>`
 
 v0.2.1 - 2024-05-02

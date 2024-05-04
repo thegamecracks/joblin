@@ -17,18 +17,18 @@ Welcome to Joblin!
 .. |docs-workflow| image:: https://img.shields.io/github/actions/workflow/status/thegamecracks/joblin/publish-docs.yml?style=flat-square&logo=github&label=docs
    :target: https://thegamecracks.github.io/joblin/
 
-Joblin is a simple, SQLite-based, synchronous, Python job scheduler library.
+Joblin is a simple, SQLite-based, synchronous, Python job queue library.
 
 .. code-block:: python
 
    import time
-   from joblin import Scheduler
+   from joblin import Queue
 
-   with Scheduler.connect("job.db") as scheduler:
+   with Queue.connect("job.db") as queue:
       data = '{"type": "my-type", "message": "Hello world!"}'
-      scheduler.add_job_from_now(data, starts_after=3.0, expires_after=10.0)
+      queue.add_job_from_now(data, starts_after=3.0, expires_after=10.0)
 
-      while (job := scheduler.get_next_job()) is not None:
+      while (job := queue.get_next_job()) is not None:
          time.sleep(job.delay)
          print(f"Received job {job.id} with data: {job.data}")
          job.complete()
@@ -48,14 +48,14 @@ With Python 3.11+ and Git, this library can be installed using:
 
    pip install git+https://github.com/thegamecracks/joblin@v0.2.1
 
-Afterwards you can import ``joblin`` and use the :class:`~joblin.Scheduler`
+Afterwards you can import ``joblin`` and use the :class:`~joblin.Queue`
 class to start storing jobs.
 
 Examples
 --------
 
 Check out the `examples/ <https://github.com/thegamecracks/joblin/tree/main/examples/>`_
-for reference on using the scheduler:
+for reference on using the queue:
 
 .. image:: https://raw.githubusercontent.com/thegamecracks/joblin/main/examples/tkinter_app.png
    :target: https://github.com/thegamecracks/joblin/tree/main/examples/tkinter_app.py
@@ -68,7 +68,7 @@ This project is written under the MIT license.
 API Reference
 -------------
 
-.. autoclass:: joblin.Scheduler
+.. autoclass:: joblin.Queue
 
    .. autoclasstoc::
 

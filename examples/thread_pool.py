@@ -13,20 +13,20 @@ from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from contextlib import contextmanager
 from typing import Callable, Iterator
 
-from joblin import Job, Scheduler
+from joblin import Job, Queue
 
 
 def main() -> None:
-    scheduler_factory = lambda: Scheduler.connect("job.db")
+    queue_factory = lambda: Queue.connect("job.db")
     executor = ThreadPoolExecutor(max_workers=3)
 
-    with scheduler_factory() as main_scheduler, fail_fast_shutdown(executor):
-        submit_jobs(main_scheduler)
+    with queue_factory() as main_queue, fail_fast_shutdown(executor):
+        submit_jobs(main_queue)
 
-        runner = Runner(main_scheduler, scheduler_factory, executor)
+        runner = Runner(main_queue, queue_factory, executor)
         runner.run_pending_jobs()
 
-        pending = main_scheduler.count_pending_jobs()
+        pending = main_queue.count_pending_jobs()
         print(f"Finished with {pending} job(s) pending")
 
 
@@ -44,35 +44,35 @@ def fail_fast_shutdown(executor: Executor) -> Iterator[Executor]:
             raise
 
 
-def submit_jobs(scheduler: Scheduler) -> None:
+def submit_jobs(queue: Queue) -> None:
     n_jobs = 15
     data = "Hello world!"
 
     for n in range(n_jobs):
-        scheduler.add_job_from_now(data, starts_after=n / n_jobs * 2)
+        queue.add_job_from_now(data, starts_after=n / n_jobs * 2)
 
-    pending = scheduler.count_pending_jobs()
+    pending = queue.count_pending_jobs()
     print(f"{n_jobs} jobs submitted, {pending} jobs pending")
 
 
 class Runner:
     def __init__(
         self,
-        scheduler: Scheduler,
-        scheduler_factory: Callable[[], Scheduler],
+        queue: Queue,
+        queue_factory: Callable[[], Queue],
         executor: Executor,
     ) -> None:
-        self.scheduler = scheduler
-        self.scheduler_factory = scheduler_factory
+        self.queue = queue
+        self.queue_factory = queue_factory
         self.executor = executor
 
     def run_pending_jobs(self) -> None:
         futures: list[Future] = []
 
-        # For this example, we'll stop checking for jobs once the scheduler is empty.
+        # For this example, we'll stop checking for jobs once the queue is empty.
         # Feel free to make this run indefinitely.
         while True:
-            job_delay = self.scheduler.lock_next_job_delay()
+            job_delay = self.queue.lock_next_job_delay()
             if job_delay is None:
                 break
 
@@ -105,7 +105,7 @@ class Runner:
             yield
         except BaseException:
             print(f"Failsafe! Unlocking job #{job_id}")
-            self.scheduler.unlock_job(job_id)
+            self.queue.unlock_job(job_id)
             raise
 
     def _wait_to_run_job(self, job_id: int, delay: float) -> Future | None:
@@ -113,7 +113,7 @@ class Runner:
             print(f"Waiting {delay:.2f}s for job #{job_id}...")
             time.sleep(delay)
 
-        job = self.scheduler.get_job_by_id(job_id)
+        job = self.queue.get_job_by_id(job_id)
         if job is None:
             return print(f"Skipping now-deleted job #{job_id}")
 
@@ -127,10 +127,10 @@ class Runner:
         print(f"  Thread {tid:05d} running job #{job.id}...")
         time.sleep(random.uniform(1, 4))
 
-        # The scheduler associated with the job isn't thread-safe,
-        # so we need to create a new scheduler to complete the job.
-        with self.scheduler_factory() as scheduler:
-            scheduler.complete_job(job.id)
+        # The queue associated with the job isn't thread-safe,
+        # so we need to create a new queue to complete the job.
+        with self.queue_factory() as queue:
+            queue.complete_job(job.id)
 
         print(f"  Thread {tid:05d} completed job #{job.id}")
 
@@ -144,9 +144,9 @@ class Runner:
 
         def callback(fut: Future) -> None:
             # Careful! Future callbacks run in the worker's thread.
-            # We need a new scheduler here.
-            with self.scheduler_factory() as scheduler:
-                scheduler.unlock_job(job_id)
+            # We need a new queue here.
+            with self.queue_factory() as queue:
+                queue.unlock_job(job_id)
 
         return callback
 

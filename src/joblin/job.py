@@ -4,23 +4,23 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .scheduler import Scheduler
+    from .queue import Queue
 
 
 @dataclass
 class Job:
-    """A job created by the scheduler.
+    """A job created by the queue.
 
-    Any methods here that call the scheduler are not thread-safe.
+    Any methods here that call the queue are not thread-safe.
     If querying from another thread is desired, you must create a
-    new connection and scheduler.
+    new connection and queue.
 
     """
 
-    scheduler: Scheduler
-    """The scheduler associated with this job."""
+    queue: Queue
+    """The queue associated with this job."""
     id: int
-    """The job's ID stored in the scheduler."""
+    """The job's ID stored in the queue."""
     data: Any
     """The payload stored with this job."""
     created_at: float
@@ -45,7 +45,7 @@ class Job:
     def complete(self, completed_at: float | None = None) -> bool:
         """Mark the job as completed.
 
-        This is a convenience method for calling :meth:`Scheduler.complete_job()`.
+        This is a convenience method for calling :meth:`Queue.complete_job()`.
 
         If the job does not exist, this is a no-op.
 
@@ -54,7 +54,7 @@ class Job:
 
         :param completed_at:
             The time at which the job was completed.
-            Defaults to the scheduler's current time.
+            Defaults to the queue's current time.
         :returns: ``True`` if the job was updated, ``False`` otherwise.
 
         .. versionchanged:: 0.1.1
@@ -62,25 +62,25 @@ class Job:
             rather than being a required parameter.
 
         """
-        return self.scheduler.complete_job(self.id, completed_at)
+        return self.queue.complete_job(self.id, completed_at)
 
     def delete(self) -> bool:
-        """Delete the job from the scheduler.
+        """Delete the job from the queue.
 
-        This is a convenience method for calling :meth:`Scheduler.delete_job()`.
+        This is a convenience method for calling :meth:`Queue.delete_job()`.
 
         :returns: ``True`` if the job existed, ``False`` otherwise.
 
         """
-        return self.scheduler.delete_job(self.id)
+        return self.queue.delete_job(self.id)
 
     def lock(self, locked_at: float | None = None) -> bool:
         """Attempt to lock this job.
 
-        This is a convenience method for calling :meth:`Scheduler.lock_job()`.
+        This is a convenience method for calling :meth:`Queue.lock_job()`.
 
         This prevents the job from showing up in subsequent
-        :meth:`Scheduler.get_next_job()` calls.
+        :meth:`Queue.get_next_job()` calls.
 
         If the job is already locked or does not exist, this returns ``False``.
 
@@ -92,12 +92,12 @@ class Job:
         .. versionadded:: unreleased
 
         """
-        return self.scheduler.lock_job(self.id, locked_at=locked_at)
+        return self.queue.lock_job(self.id, locked_at=locked_at)
 
     def unlock(self) -> bool:
         """Attempt to unlock this job.
 
-        This is a convenience method for calling :meth:`Scheduler.unlock_job()`.
+        This is a convenience method for calling :meth:`Queue.unlock_job()`.
 
         Unlike :meth:`lock()`, this method returns ``True``
         if job is already unlocked.
@@ -110,7 +110,7 @@ class Job:
         .. versionadded:: unreleased
 
         """
-        return self.scheduler.unlock_job(self.id)
+        return self.queue.unlock_job(self.id)
 
     @property
     def delay(self) -> float:
@@ -121,4 +121,4 @@ class Job:
         .. versionadded:: unreleased
 
         """
-        return max(0.0, self.starts_at - self.scheduler.time())
+        return max(0.0, self.starts_at - self.queue.time())

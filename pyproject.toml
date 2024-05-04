@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "joblin"
-description = "An SQLite-based synchronous job scheduler."
+description = "An SQLite-based synchronous job queue."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "thegamecracks" }]

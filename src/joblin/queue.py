@@ -10,14 +10,14 @@ from ._migrations import run_default_migrations
 log = logging.getLogger(__name__)
 
 
-class Scheduler:
-    """A scheduler that persists jobs in an SQLite database. Not thread-safe.
+class Queue:
+    """A queue that persists jobs in an SQLite database. Not thread-safe.
 
     ::
 
-        scheduler = Scheduler.connect("job.db")
-        job = scheduler.add_job("Some payload")
-        scheduler.close()
+        queue = Queue.connect("job.db")
+        job = queue.add_job("Some payload")
+        queue.close()
 
     This class does not directly provide a mechanism for executing jobs,
     but rather expects the caller to retrieve the next job and wait until
@@ -25,10 +25,10 @@ class Scheduler:
     to reschedule whenever a new job is added, potentially from other
     processes.
 
-    The scheduler can be used in a context manager to automatically close
+    The queue can be used in a context manager to automatically close
     the database upon exiting. For example::
 
-        with Scheduler.connect("job.db") as scheduler:
+        with Queue.connect("job.db") as queue:
             ...
 
     """
@@ -61,7 +61,7 @@ class Scheduler:
         """Connect and set up an SQLite database at the given path.
 
         ``:memory:`` can be used instead of a file path to create an
-        in-memory scheduler. In this case, it may be desirable to provide
+        in-memory queue. In this case, it may be desirable to provide
         a monotonic time function to avoid abnormal behaviour from
         the system time changing.
 
@@ -69,7 +69,7 @@ class Scheduler:
 
         :param path: The database path to open.
         :param time_func: The function used to get the current time.
-        :returns: A new scheduler instance.
+        :returns: A new queue instance.
 
         """
         conn = sqlite3.connect(path, isolation_level=None, **kwargs)
@@ -92,7 +92,7 @@ class Scheduler:
         starts_at: float | None = None,
         expires_at: float | None = None,
     ) -> Job:
-        """Add a job to the scheduler.
+        """Add a job to the queue.
 
         :param data: The payload to be stored with the job.
         :param created_at:
@@ -174,7 +174,7 @@ class Scheduler:
         )
 
     def get_job_by_id(self, job_id: int) -> Job | None:
-        """Get a job from the scheduler by ID.
+        """Get a job from the queue by ID.
 
         :param job_id: The ID of the job.
         :returns: A job object, or None if not found.
@@ -186,7 +186,7 @@ class Scheduler:
             return Job(self, **row)
 
     def get_next_job(self, now: float | None = None) -> Job | None:
-        """Get the next job in the scheduler.
+        """Get the next job in the queue.
 
         If two jobs start at the same time, the job with the
         lower ID gets priority.
@@ -303,7 +303,7 @@ class Scheduler:
             return True
 
     def lock_next_job(self, now: float | None = None) -> Job | None:
-        """Get and lock the next job in the scheduler.
+        """Get and lock the next job in the queue.
 
         This should be preferred over manually calling :meth:`get_next_job()`
         and :meth:`lock_job()` as this method will do both in a single
@@ -431,7 +431,7 @@ class Scheduler:
         return c.rowcount > 0
 
     def delete_job(self, job_id: int) -> bool:
-        """Delete a job from the scheduler by ID.
+        """Delete a job from the queue by ID.
 
         :param job_id: The ID of the job.
         :returns: ``True`` if the job existed, ``False`` otherwise.
@@ -474,7 +474,7 @@ class Scheduler:
         return c.rowcount
 
     def close(self) -> None:
-        """Close the scheduler.
+        """Close the queue.
 
         .. versionadded:: 0.2.0
 

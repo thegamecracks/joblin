@@ -13,33 +13,33 @@ import time
 from contextlib import contextmanager
 from typing import Callable, Iterator
 
-from joblin import Job, Scheduler
+from joblin import Job, Queue
 
 
 def main() -> None:
-    scheduler_factory = lambda: Scheduler.connect("job.db")
+    queue_factory = lambda: Queue.connect("job.db")
 
-    with scheduler_factory() as scheduler:
-        submit_jobs(scheduler)
+    with queue_factory() as queue:
+        submit_jobs(queue)
 
-    runners = [Runner(scheduler_factory) for _ in range(3)]
+    runners = [Runner(queue_factory) for _ in range(3)]
     threads = [threading.Thread(target=runner.run_pending_jobs) for runner in runners]
 
     start_and_join(runners, threads)
 
-    with scheduler_factory() as scheduler:
-        pending = scheduler.count_pending_jobs()
+    with queue_factory() as queue:
+        pending = queue.count_pending_jobs()
         print(f"Finished with {pending} job(s) pending")
 
 
-def submit_jobs(scheduler: Scheduler) -> None:
+def submit_jobs(queue: Queue) -> None:
     n_jobs = 15
     data = "Hello world!"
 
     for n in range(n_jobs):
-        scheduler.add_job_from_now(data, starts_after=n / n_jobs * 2)
+        queue.add_job_from_now(data, starts_after=n / n_jobs * 2)
 
-    pending = scheduler.count_pending_jobs()
+    pending = queue.count_pending_jobs()
     print(f"{n_jobs} jobs submitted, {pending} jobs pending")
 
 
@@ -68,24 +68,24 @@ def join(threads: list[threading.Thread]) -> None:
 
 
 class Runner:
-    def __init__(self, scheduler_factory: Callable[[], Scheduler]) -> None:
-        self.scheduler_factory = scheduler_factory
+    def __init__(self, queue_factory: Callable[[], Queue]) -> None:
+        self.queue_factory = queue_factory
         self._stop_ev = threading.Event()
 
     def run_pending_jobs(self) -> None:
-        scheduler = self.scheduler_factory()
+        queue = self.queue_factory()
 
         # For this example, we'll stop checking for jobs once
-        # the stop event is set or the scheduler is empty.
+        # the stop event is set or the queue is empty.
         # Feel free to make this run indefinitely.
         while not self._stop_ev.is_set():
-            job_delay = scheduler.lock_next_job_delay()
+            job_delay = queue.lock_next_job_delay()
             if job_delay is None:
                 break
 
             job_id, delay = job_delay
-            with self._unlock_on_exit(scheduler, job_id):
-                self._wait_to_run_job(scheduler, job_id, delay)
+            with self._unlock_on_exit(queue, job_id):
+                self._wait_to_run_job(queue, job_id, delay)
 
         print("Done")
 
@@ -93,7 +93,7 @@ class Runner:
         self._stop_ev.set()
 
     @contextmanager
-    def _unlock_on_exit(self, scheduler: Scheduler, job_id: int) -> Iterator[None]:
+    def _unlock_on_exit(self, queue: Queue, job_id: int) -> Iterator[None]:
         # Once the job is done or an error occurs, unlock the job.
         #
         # This is not entirely fool-proof since it allows for a gap between
@@ -102,28 +102,28 @@ class Runner:
         try:
             yield
         finally:
-            scheduler.unlock_job(job_id)
+            queue.unlock_job(job_id)
 
-    def _wait_to_run_job(self, scheduler: Scheduler, job_id: int, delay: float) -> None:
+    def _wait_to_run_job(self, queue: Queue, job_id: int, delay: float) -> None:
         if delay > 0:
             print(f"Waiting {delay:.2f}s for job #{job_id}...")
 
             if self._stop_ev.wait(delay):
                 return print("Stop requested while waiting on job")
 
-        job = scheduler.get_job_by_id(job_id)
+        job = queue.get_job_by_id(job_id)
         if job is None:
             return print(f"Skipping now-deleted job #{job_id}")
 
         # At this point, the runner can't check the stop signal
         # and the job must be run to completion.
-        self._run_job(scheduler, job)
+        self._run_job(queue, job)
 
-    def _run_job(self, scheduler: Scheduler, job: Job) -> None:
+    def _run_job(self, queue: Queue, job: Job) -> None:
         print(f"Running job #{job.id}...")
 
         time.sleep(random.uniform(1, 4))
-        scheduler.complete_job(job.id)
+        queue.complete_job(job.id)
 
         print(f"Completed job #{job.id}")
 
