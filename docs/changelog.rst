@@ -25,6 +25,8 @@ See `examples/thread_pool.py`_ for a demonstration of the new API.
 Added
 ^^^^^
 
+- :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
+  (replaces ``Scheduler.get_seconds_until_next_job()``)
 - :meth:`Scheduler.lock_job() <joblin.Scheduler.lock_job>`
 - :meth:`Scheduler.lock_next_job() <joblin.Scheduler.lock_next_job>`
 - :meth:`Scheduler.lock_next_job_delay() <joblin.Scheduler.lock_next_job_delay>`
@@ -38,9 +40,6 @@ Changed
 ^^^^^^^
 
 - BREAKING CHANGE:
-  Renamed ``Scheduler.get_seconds_until_next_job()``
-  to :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
-- BREAKING CHANGE:
   Job and Scheduler delay methods can no longer return negative delays.
   This is to simplify usage for end users. If a negative delay is still
   desired, users will have to do ``job.starts_at - scheduler.time()``.
@@ -53,6 +52,8 @@ Changed
 Removed
 ^^^^^^^
 
+- ``Scheduler.get_seconds_until_next_job()`` in favour of
+  :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
 - ``Job.get_seconds_until_start()`` in favour of :attr:`Job.delay <joblin.Job.delay>`
 
 v0.2.1 - 2024-05-02
