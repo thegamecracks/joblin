@@ -30,8 +30,8 @@ Added
 - :meth:`Scheduler.lock_next_job_delay() <joblin.Scheduler.lock_next_job_delay>`
 - :meth:`Scheduler.unlock_job() <joblin.Scheduler.unlock_job>`
 - :attr:`Job.locked_at <joblin.Job.locked_at>`
-- :attr:`Job.lock() <joblin.Job.lock>`
-- :attr:`Job.unlock() <joblin.Job.unlock>`
+- :meth:`Job.lock() <joblin.Job.lock>`
+- :meth:`Job.unlock() <joblin.Job.unlock>`
 
 Changed
 ^^^^^^^
