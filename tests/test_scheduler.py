@@ -16,6 +16,7 @@ def test_scheduler_add_job(scheduler: Scheduler):
         starts_at=2,
         expires_at=3,
         completed_at=None,
+        locked_at=None,
     )
 
     job = scheduler.add_job(DATA, created_at=1, starts_at=2, expires_at=3)
@@ -32,6 +33,7 @@ def test_scheduler_add_job_defaults(scheduler: Scheduler):
         starts_at=0,
         expires_at=None,
         completed_at=None,
+        locked_at=None,
     )
 
     job = scheduler.add_job(DATA)
@@ -48,6 +50,7 @@ def test_scheduler_add_job_from_now(scheduler: Scheduler):
         starts_at=2,
         expires_at=3,
         completed_at=None,
+        locked_at=None,
     )
 
     job = scheduler.add_job_from_now(DATA, created_at=1, starts_after=1, expires_after=2)
@@ -64,6 +67,7 @@ def test_scheduler_add_job_from_now_defaults(scheduler: Scheduler):
         starts_at=0,
         expires_at=None,
         completed_at=None,
+        locked_at=None,
     )
 
     job = scheduler.add_job_from_now(DATA)

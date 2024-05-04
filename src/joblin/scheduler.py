@@ -1,7 +1,8 @@
 import logging
 import sqlite3
 import time
-from typing import Any, Callable, Self
+from contextlib import contextmanager
+from typing import Any, Callable, Iterator, Literal, Self
 
 from .job import Job
 from ._migrations import run_default_migrations
@@ -130,6 +131,7 @@ class Scheduler:
             starts_at,
             expires_at,
             completed_at=None,
+            locked_at=None,
         )
 
     def add_job_from_now(
@@ -201,6 +203,7 @@ class Scheduler:
         c = self.conn.execute(
             "SELECT * FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at) "
+            "AND locked_at IS NULL "
             "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
@@ -237,6 +240,7 @@ class Scheduler:
         c = self.conn.execute(
             "SELECT id, starts_at FROM job WHERE completed_at IS NULL "
             "AND (expires_at IS NULL OR ? < expires_at) "
+            "AND locked_at IS NULL "
             "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
@@ -263,6 +267,55 @@ class Scheduler:
             (now,),
         )
         return c.fetchone()[0]
+
+    def lock_job(self, job_id: int, *, locked_at: float | None = None) -> bool:
+        """Attempt to lock the given job.
+
+        This prevents the job from showing up in subsequent
+        :meth:`get_next_job()` calls.
+
+        If the job is already locked or does not exist, this returns ``False``.
+
+        :param job_id: The ID of the job.
+        :param locked_at:
+            The time at which the job was locked.
+            Defaults to the current time.
+        :returns: ``True`` if the job was locked, ``False`` otherwise.
+
+        """
+        if locked_at is None:
+            locked_at = self.time()
+
+        with self._begin("IMMEDIATE"):
+            c = self.conn.execute("SELECT locked_at FROM job WHERE id = ?", (job_id,))
+            row = c.fetchone()
+
+            if row is None:  # Job was deleted
+                return False
+
+            if row[0] is not None:  # Job is already locked
+                return False
+
+            c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (locked_at, job_id))
+            return True
+
+    def unlock_job(self, job_id: int) -> bool:
+        """Attempt to unlock the given job.
+
+        Unlike :meth:`lock_job()`, this method returns ``True``
+        if job is already unlocked.
+
+        If the job does not exist, this returns ``False``.
+
+        :param job_id: The ID of the job.
+        :returns: ``True`` if the job was unlocked, ``False`` otherwise.
+
+        """
+        c = self.conn.execute(
+            "UPDATE job SET locked_at = ? WHERE id = ? RETURNING 1",
+            (None, job_id),
+        )
+        return c.fetchone() is not None
 
     def complete_job(self, job_id: int, completed_at: float | None = None) -> bool:
         """Mark the given job as completed.
@@ -340,3 +393,17 @@ class Scheduler:
     def time(self) -> float:
         """Get the current time as returned by :attr:`time_func`."""
         return self.time_func()
+
+    @contextmanager
+    def _begin(
+        self,
+        mode: Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"] = "DEFERRED",
+    ) -> Iterator[sqlite3.Connection]:
+        self.conn.execute(f"BEGIN {mode}")
+        try:
+            yield self.conn
+        except BaseException:
+            self.conn.rollback()
+            raise
+        else:
+            self.conn.commit()

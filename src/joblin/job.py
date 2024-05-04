@@ -29,6 +29,8 @@ class Job:
     """
     completed_at: float | None
     """The time at which this job was completed, or None if not completed."""
+    locked_at: float | None
+    """The time at which this job was locked, or None if not locked."""
 
     def complete(self, completed_at: float | None = None) -> bool:
         """Mark the job as completed.
@@ -61,6 +63,40 @@ class Job:
 
         """
         return self.scheduler.delete_job(self.id)
+
+    def lock(self, locked_at: float | None = None) -> bool:
+        """Attempt to lock this job.
+
+        This is a convenience method for calling :meth:`Scheduler.lock_job()`.
+
+        This prevents the job from showing up in subsequent
+        :meth:`Scheduler.get_next_job()` calls.
+
+        If the job is already locked or does not exist, this returns ``False``.
+
+        :param locked_at:
+            The time at which the job was locked.
+            Defaults to the current time.
+        :returns: ``True`` if the job was locked, ``False`` otherwise.
+
+        """
+        return self.scheduler.lock_job(self.id, locked_at=locked_at)
+
+    def unlock(self) -> bool:
+        """Attempt to unlock this job.
+
+        This is a convenience method for calling :meth:`Scheduler.unlock_job()`.
+
+        Unlike :meth:`lock()`, this method returns ``True``
+        if job is already unlocked.
+
+        If the job does not exist, this returns ``False``.
+
+        :param job_id: The ID of the job.
+        :returns: ``True`` if the job was unlocked, ``False`` otherwise.
+
+        """
+        return self.scheduler.unlock_job(self.id)
 
     def get_seconds_until_start(self) -> float:
         """Return the amount of time in seconds to wait until the job starts.
