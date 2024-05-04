@@ -18,9 +18,11 @@ This locking mechanism is entirely experimental. For now, the scheduler
 does not provide a context manager to lock and unlock jobs, which poses
 a risk of leaving jobs deadlocked.
 
-See `examples/thread_pool.py`_ for a demonstration of the new API.
+See `examples/thread_pool.py`_ and `examples/threads.py`_ for demonstrations
+of the new API.
 
 .. _examples/thread_pool.py: https://github.com/thegamecracks/joblin/blob/main/examples/thread_pool.py
+.. _examples/threads.py: https://github.com/thegamecracks/joblin/blob/main/examples/threads.py
 
 Added
 ^^^^^

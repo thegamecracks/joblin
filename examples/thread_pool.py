@@ -1,4 +1,9 @@
-"""Starts a thread pool executor to complete jobs concurrently."""
+"""Starts a thread pool executor to complete jobs concurrently.
+
+Here, the main thread reads from the queue and submits jobs to worker
+threads. For reading from multiple threads, see threads.py.
+
+"""
 
 import concurrent.futures
 import random
