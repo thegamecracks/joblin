@@ -25,7 +25,7 @@ with Scheduler.connect("job.db") as scheduler:
 With Python 3.11+ and Git, this library can be installed using:
 
 ```sh
-pip install git+https://github.com/thegamecracks/joblin
+pip install git+https://github.com/thegamecracks/joblin@v0.2.1
 ```
 
 Afterwards you can import `joblin` and use the `Scheduler` class
