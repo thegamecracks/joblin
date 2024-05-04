@@ -1,10 +1,12 @@
 """Starts a thread pool executor to complete jobs concurrently."""
+
 import concurrent.futures
 import random
 import threading
 import time
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
-from typing import Callable
+from contextlib import contextmanager
+from typing import Callable, Iterator
 
 from joblin import Job, Scheduler
 
@@ -12,9 +14,27 @@ from joblin import Job, Scheduler
 def main() -> None:
     scheduler_factory = lambda: Scheduler.connect("job.db")
     executor = ThreadPoolExecutor(max_workers=3)
-    with scheduler_factory() as main_scheduler, executor:
+    with scheduler_factory() as main_scheduler, fail_fast_shutdown(executor):
         submit_jobs(main_scheduler)
-        run_pending_jobs(main_scheduler, executor, scheduler_factory)
+        runner = Runner(main_scheduler, scheduler_factory, executor)
+        runner.run_pending_jobs()
+
+        pending = main_scheduler.count_pending_jobs()
+        print(f"Finished with {pending} job(s) pending")
+
+
+@contextmanager
+def fail_fast_shutdown(executor: Executor) -> Iterator[Executor]:
+    # The default behaviour for executors is to shut down
+    # without cancelling futures. Since our jobs are persistent,
+    # it's fine to cancel pending futures and shut down more quickly.
+    with executor:
+        try:
+            yield executor
+        except BaseException as e:
+            print(f"{type(e).__name__} raised, shutting down executor")
+            executor.shutdown(wait=True, cancel_futures=True)
+            raise
 
 
 def submit_jobs(scheduler: Scheduler) -> None:
@@ -28,78 +48,102 @@ def submit_jobs(scheduler: Scheduler) -> None:
     print(f"{n_jobs} jobs submitted, {pending} jobs pending")
 
 
-def run_pending_jobs(
-    scheduler: Scheduler,
-    executor: Executor,
-    scheduler_factory: Callable[[], Scheduler],
-) -> None:
-    futures: list[Future] = []
+class Runner:
+    def __init__(
+        self,
+        scheduler: Scheduler,
+        scheduler_factory: Callable[[], Scheduler],
+        executor: Executor,
+    ) -> None:
+        self.scheduler = scheduler
+        self.scheduler_factory = scheduler_factory
+        self.executor = executor
 
-    # For this example, we'll stop checking for jobs once the scheduler is empty.
-    # Feel free to make this run indefinitely.
-    while (job_delay := scheduler.get_seconds_until_next_job()) is not None:
-        job_id, job_delay = job_delay
-        job_delay = max(0, job_delay)
+    def run_pending_jobs(self) -> None:
+        futures: list[Future] = []
 
+        # For this example, we'll stop checking for jobs once the scheduler is empty.
+        # Feel free to make this run indefinitely.
+        while True:
+            job_delay = self.scheduler.lock_and_get_seconds_until_next_job()
+            if job_delay is None:
+                break
+
+            job_id, job_delay = job_delay
+            job_delay = max(0, job_delay)
+
+            with self._failsafe_unlock(job_id):
+                fut = self._wait_to_run_job(job_id, job_delay)
+
+            if fut is not None:
+                futures.append(fut)
+
+        # Don't return until all jobs are completed.
+        # This is what the caller would expect, rather than
+        # returning while workers are still running.
+        print("No more pending jobs, waiting on executor")
+        print("(KeyboardInterrupt signal may be blocked)")
+        concurrent.futures.wait(futures)
+
+    @contextmanager
+    def _failsafe_unlock(self, job_id: int) -> Iterator[None]:
+        # In case an error occurs before the callback gets registered,
+        # we have this context manager to unlock the job.
+        #
+        # Yes, this is a bit confusing to think about and is still
+        # not entirely fool-proof since it allows for a gap between
+        # the lock call and when this context manager is reached.
+        # In other words, the API limits us from being fully failsafe.
+        #
+        # Try to Ctrl+C while the runner is waiting for jobs!
+        try:
+            yield
+        except BaseException:
+            print(f"Failsafe! Unlocking job #{job_id}")
+            self.scheduler.unlock_job(job_id)
+            raise
+
+    def _wait_to_run_job(self, job_id: int, job_delay: float) -> Future | None:
         if job_delay > 0:
             print(f"Waiting {job_delay:.2f}s for job #{job_id}...")
             time.sleep(job_delay)
 
-        # FIXME: Below checks are NOT atomic. This requires a scheduler
-        #        method to get and lock a job in the same transaction.
-        #        Until this is implemented, it may be possible for
-        #        another process to complete/delete the job before
-        #        the job is locked by this process.
-        job = scheduler.get_job_by_id(job_id)
+        job = self.scheduler.get_job_by_id(job_id)
         if job is None:
-            print(f"Skipping now-deleted job #{job_id}")
-            continue
-        if job.completed_at is not None:
-            print(f"Skipping now-completed job #{job_id}")
-            continue
-        if not job.lock():
-            print(f"Unable to lock job #{job_id}, skipping")
-            continue
+            return print(f"Skipping now-deleted job #{job_id}")
 
         print(f"Submitting job #{job_id} to executor")
-        fut = executor.submit(run_job, scheduler_factory, job)
-        fut.add_done_callback(make_job_unlocker(scheduler_factory, job.id))
-        futures.append(fut)
+        fut = self.executor.submit(self._run_job, job)
+        fut.add_done_callback(self._make_job_unlocker(job.id))
+        return fut
 
-    # Wait for any remaining futures to complete. This is to avoid
-    # shutting down the executor early and unnecessarily cancelling jobs.
-    concurrent.futures.wait(futures)
+    def _run_job(self, job: Job) -> None:
+        tid = threading.get_ident()
+        print(f"  Thread {tid:05d} running job #{job.id}...")
+        time.sleep(random.uniform(1, 4))
 
+        # The scheduler associated with the job isn't thread-safe,
+        # so we need to create a new scheduler to complete the job.
+        with self.scheduler_factory() as scheduler:
+            scheduler.complete_job(job.id)
 
-def run_job(scheduler_factory: Callable[[], Scheduler], job: Job) -> None:
-    tid = threading.get_ident()
-    print(f"  Thread {tid:05d} running job #{job.id}...")
-    time.sleep(random.uniform(1, 4))
+        print(f"  Thread {tid:05d} completed job #{job.id}")
 
-    # The scheduler associated with the job isn't thread-safe,
-    # so we need to create a new scheduler to complete the job.
-    with scheduler_factory() as scheduler:
-        scheduler.complete_job(job.id)
+    def _make_job_unlocker(self, job_id: int) -> Callable[[Future], None]:
+        # Instead of unlocking the job directly in run_job(), we'll use
+        # a future callback.
+        #
+        # This simplifies run_job() by not needing a try/finally clause,
+        # and also guarantees jobs will be unlocked if the executor shuts
+        # down with jobs that haven't been given to a worker thread yet.
 
-    print(f"  Thread {tid:05d} completed job #{job.id}")
+        def callback(fut: Future) -> None:
+            # Careful! Future callbacks run in the worker's thread.
+            # We need a new scheduler here.
+            with self.scheduler_factory() as scheduler:
+                scheduler.unlock_job(job_id)
 
-
-def make_job_unlocker(
-    scheduler_factory: Callable[[], Scheduler],
-    job_id: int,
-) -> Callable[[Future], None]:
-    # Instead of unlocking the job directly in run_job(), we'll use
-    # a future callback.
-    #
-    # This simplifies run_job() by not needing a try/finally clause,
-    # and also guarantees jobs will be unlocked if the executor shuts
-    # down with jobs that haven't been given to a worker thread yet.
-
-    def callback(fut: Future) -> None:
-        with scheduler_factory() as scheduler:
-            scheduler.unlock_job(job_id)
-
-    return callback
+        return callback
 
 
 _print = print
