@@ -211,7 +211,7 @@ class Scheduler:
         if row is not None:
             return Job(self, **row)
 
-    def get_seconds_until_next_job(
+    def get_next_job_delay(
         self,
         now: float | None = None,
     ) -> tuple[int, float] | None:
@@ -232,6 +232,8 @@ class Scheduler:
             The current time.
             Defaults to the current time.
         :returns: The next job's ID and delay, or None if no job is pending.
+
+        .. versionadded:: unreleased
 
         """
         if now is None:
@@ -341,7 +343,7 @@ class Scheduler:
             c.execute("UPDATE job SET locked_at = ? WHERE id = ?", (now, job.id))
             return job
 
-    def lock_and_get_seconds_until_next_job(
+    def lock_next_job_delay(
         self,
         now: float | None = None,
     ) -> tuple[int, float] | None:

@@ -65,7 +65,7 @@ class Runner:
         # For this example, we'll stop checking for jobs once the scheduler is empty.
         # Feel free to make this run indefinitely.
         while True:
-            job_delay = self.scheduler.lock_and_get_seconds_until_next_job()
+            job_delay = self.scheduler.lock_next_job_delay()
             if job_delay is None:
                 break
 

@@ -49,15 +49,15 @@ def test_lock_next_job(scheduler: Scheduler):
         assert scheduler.get_next_job() == job
 
 
-def test_lock_and_get_seconds_until_next_job(scheduler: Scheduler):
+def test_lock_next_job_delay(scheduler: Scheduler):
     jobs = [scheduler.add_job(DATA) for _ in range(100)]
 
     for job in jobs:
-        locked = scheduler.lock_and_get_seconds_until_next_job()
+        locked = scheduler.lock_next_job_delay()
         assert locked is not None
         assert locked == (job.id, 0)
 
-    assert scheduler.lock_and_get_seconds_until_next_job() is None
+    assert scheduler.lock_next_job_delay() is None
 
     for job in reversed(jobs):
         assert scheduler.unlock_job(job.id) is True

@@ -114,22 +114,22 @@ def test_scheduler_get_next_job(scheduler: Scheduler):
     assert scheduler.get_next_job(now=0) is None
 
 
-def test_scheduler_get_seconds_until_next_job(scheduler: Scheduler):
-    assert scheduler.get_seconds_until_next_job(now=0) is None
+def test_scheduler_get_next_job_delay(scheduler: Scheduler):
+    assert scheduler.get_next_job_delay(now=0) is None
 
     job1 = scheduler.add_job(DATA, created_at=0, starts_at=2, expires_at=4)
     for i in range(4):
-        assert scheduler.get_seconds_until_next_job(now=i) == (job1.id, 2 - i)
-    assert scheduler.get_seconds_until_next_job(now=4) is None
+        assert scheduler.get_next_job_delay(now=i) == (job1.id, 2 - i)
+    assert scheduler.get_next_job_delay(now=4) is None
 
     job2 = scheduler.add_job(DATA, created_at=0, starts_at=1, expires_at=None)
     for i in range(5):
-        assert scheduler.get_seconds_until_next_job(now=i) == (job2.id, 1 - i)
+        assert scheduler.get_next_job_delay(now=i) == (job2.id, 1 - i)
 
     scheduler.delete_job(job1.id)
     scheduler.delete_job(job2.id)
 
-    assert scheduler.get_seconds_until_next_job(now=0) is None
+    assert scheduler.get_next_job_delay(now=0) is None
 
 
 def test_scheduler_count_pending_jobs(scheduler: Scheduler):
@@ -147,14 +147,14 @@ def test_scheduler_count_pending_jobs(scheduler: Scheduler):
 def test_scheduler_complete_job(scheduler: Scheduler):
     job = scheduler.add_job(None)
     assert scheduler.get_next_job() == job
-    assert scheduler.get_seconds_until_next_job() == (job.id, 0)
+    assert scheduler.get_next_job_delay() == (job.id, 0)
     assert scheduler.count_pending_jobs() == 1
 
     job_updated = scheduler.complete_job(job.id)
     assert job_updated is True
 
     assert scheduler.get_next_job() is None
-    assert scheduler.get_seconds_until_next_job() is None
+    assert scheduler.get_next_job_delay() is None
     assert scheduler.count_pending_jobs() == 0
 
     fetched = scheduler.get_job_by_id(job.id)
@@ -223,7 +223,7 @@ def test_scheduler_next_job_ordered_by_id(scheduler: Scheduler):
     jobs = [scheduler.add_job(DATA) for _ in range(100)]
     for job in jobs:
         assert scheduler.get_next_job() == job
-        assert scheduler.get_seconds_until_next_job() == (job.id, 0)
+        assert scheduler.get_next_job_delay() == (job.id, 0)
         scheduler.delete_job(job.id)
 
 
@@ -238,7 +238,7 @@ def test_scheduler_next_job_ordered_by_id_reversed(scheduler: Scheduler):
         job = scheduler.get_next_job()
         assert job is not None
         assert job.id == id_
-        assert scheduler.get_seconds_until_next_job() == (id_, 0)
+        assert scheduler.get_next_job_delay() == (id_, 0)
         scheduler.delete_job(id_)
 
 

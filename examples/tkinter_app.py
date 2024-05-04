@@ -90,7 +90,7 @@ class Runner:
             self.app.after_cancel(self._callback_id)
             self._callback_id = None
 
-        job_delay = self.scheduler.get_seconds_until_next_job()
+        job_delay = self.scheduler.get_next_job_delay()
         if job_delay is None:
             return
 
@@ -149,7 +149,7 @@ class SchedulerControls(Frame):
 
     def check_next_job(self) -> None:
         """Log the time remaining until the next job runs."""
-        job_delay = self.scheduler.get_seconds_until_next_job()
+        job_delay = self.scheduler.get_next_job_delay()
         if job_delay is None:
             return self.log("No job is pending completion.")
 

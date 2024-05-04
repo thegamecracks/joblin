@@ -27,7 +27,7 @@ Added
 
 - :meth:`Scheduler.lock_job() <joblin.Scheduler.lock_job>`
 - :meth:`Scheduler.lock_next_job() <joblin.Scheduler.lock_next_job>`
-- :meth:`Scheduler.lock_and_get_seconds_until_next_job() <joblin.Scheduler.lock_and_get_seconds_until_next_job>`
+- :meth:`Scheduler.lock_next_job_delay() <joblin.Scheduler.lock_next_job_delay>`
 - :meth:`Scheduler.unlock_job() <joblin.Scheduler.unlock_job>`
 - :attr:`Job.locked_at <joblin.Job.locked_at>`
 - :attr:`Job.lock() <joblin.Job.lock>`
@@ -36,6 +36,9 @@ Added
 Changed
 ^^^^^^^
 
+- BREAKING CHANGE:
+  Renamed ``Scheduler.get_seconds_until_next_job()``
+  to :meth:`Scheduler.get_next_job_delay() <joblin.Scheduler.get_next_job_delay>`
 - :meth:`Scheduler.get_next_job() <joblin.Scheduler.get_next_job>`
   and :meth:`Scheduler.get_seconds_until_next_job() <joblin.Scheduler.get_seconds_until_next_job>`
   are now guaranteed to return the job with the smaller ID if two jobs
