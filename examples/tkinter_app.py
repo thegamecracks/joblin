@@ -94,8 +94,8 @@ class Runner:
         if job_delay is None:
             return
 
-        job_id, job_delay = job_delay
-        delay_ms = int(job_delay * 1000)
+        job_id, delay = job_delay
+        delay_ms = int(delay * 1000)
 
         self._job_id = job_id
         self._callback_id = self.app.after(delay_ms, self._run_job)
@@ -153,8 +153,8 @@ class SchedulerControls(Frame):
         if job_delay is None:
             return self.log("No job is pending completion.")
 
-        job_id, job_delay = job_delay
-        self.log(f"The next job is #{job_id}, due in {job_delay:.2f} seconds.")
+        job_id, delay = job_delay
+        self.log(f"The next job is #{job_id}, due in {delay:.2f} seconds.")
 
     def count_pending_jobs(self) -> None:
         """Log the number of jobs remaining in the scheduler."""

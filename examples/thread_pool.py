@@ -69,10 +69,10 @@ class Runner:
             if job_delay is None:
                 break
 
-            job_id, job_delay = job_delay
+            job_id, delay = job_delay
 
             with self._failsafe_unlock(job_id):
-                fut = self._wait_to_run_job(job_id, job_delay)
+                fut = self._wait_to_run_job(job_id, delay)
 
             if fut is not None:
                 futures.append(fut)
@@ -102,10 +102,10 @@ class Runner:
             self.scheduler.unlock_job(job_id)
             raise
 
-    def _wait_to_run_job(self, job_id: int, job_delay: float) -> Future | None:
-        if job_delay > 0:
-            print(f"Waiting {job_delay:.2f}s for job #{job_id}...")
-            time.sleep(job_delay)
+    def _wait_to_run_job(self, job_id: int, delay: float) -> Future | None:
+        if delay > 0:
+            print(f"Waiting {delay:.2f}s for job #{job_id}...")
+            time.sleep(delay)
 
         job = self.scheduler.get_job_by_id(job_id)
         if job is None:
