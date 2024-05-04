@@ -112,11 +112,13 @@ class Job:
         """
         return self.scheduler.unlock_job(self.id)
 
-    def get_seconds_until_start(self) -> float:
-        """Return the amount of time in seconds to wait until the job starts.
+    @property
+    def delay(self) -> float:
+        """The amount of time in seconds until the job starts.
 
-        Note that the returned duration may be negative if the job's start
-        time is overdue.
+        If the job's start time is overdue, this returns 0.
+
+        .. versionadded:: unreleased
 
         """
-        return self.starts_at - self.scheduler.time()
+        return max(0.0, self.starts_at - self.scheduler.time())

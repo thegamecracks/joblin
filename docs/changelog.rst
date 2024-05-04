@@ -32,6 +32,7 @@ Added
 - :attr:`Job.locked_at <joblin.Job.locked_at>`
 - :meth:`Job.lock() <joblin.Job.lock>`
 - :meth:`Job.unlock() <joblin.Job.unlock>`
+- :attr:`Job.delay <joblin.Job.delay>` (replaces ``Job.get_seconds_until_start()``)
 
 Changed
 ^^^^^^^
@@ -44,6 +45,11 @@ Changed
   are now guaranteed to return the job with the smaller ID if two jobs
   started at the same time. Previously this was not part of the database
   query, making the ordering reliant on SQLite's implementation details.
+
+Removed
+^^^^^^^
+
+- ``Job.get_seconds_until_start()`` in favour of :attr:`Job.delay <joblin.Job.delay>`
 
 v0.2.1 - 2024-05-02
 -------------------

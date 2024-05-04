@@ -39,6 +39,6 @@ def test_job_unlock(scheduler: Scheduler):
     assert job.locked_at is None
 
 
-def test_job_get_seconds_until_start(scheduler: Scheduler):
+def test_job_delay(scheduler: Scheduler):
     job = scheduler.add_job(DATA, starts_at=3)
-    assert job.get_seconds_until_start() == 3
+    assert job.delay == 3
