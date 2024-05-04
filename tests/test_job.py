@@ -20,6 +20,25 @@ def test_job_delete(scheduler: Scheduler):
     assert scheduler.get_job_by_id(job.id) is None
 
 
+def test_job_lock(scheduler: Scheduler):
+    job = scheduler.add_job(DATA)
+    assert job.lock(locked_at=1) is True
+
+    job = scheduler.get_job_by_id(job.id)
+    assert job is not None
+    assert job.locked_at == 1
+
+
+def test_job_unlock(scheduler: Scheduler):
+    job = scheduler.add_job(DATA)
+    assert job.lock() is True
+    assert job.unlock() is True
+
+    job = scheduler.get_job_by_id(job.id)
+    assert job is not None
+    assert job.locked_at is None
+
+
 def test_job_get_seconds_until_start(scheduler: Scheduler):
     job = scheduler.add_job(DATA, starts_at=3)
     assert job.get_seconds_until_start() == 3
