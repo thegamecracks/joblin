@@ -84,7 +84,6 @@ class Runner:
                 break
 
             job_id, delay = job_delay
-
             with self._unlock_on_exit(scheduler, job_id):
                 self._wait_to_run_job(scheduler, job_id, delay)
 

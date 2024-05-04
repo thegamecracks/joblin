@@ -77,7 +77,6 @@ class Runner:
                 break
 
             job_id, delay = job_delay
-
             with self._failsafe_unlock(job_id):
                 fut = self._wait_to_run_job(job_id, delay)
 
