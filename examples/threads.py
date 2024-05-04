@@ -84,7 +84,7 @@ class Runner:
 
             job_id, delay = job_delay
 
-            with self._failsafe_unlock(scheduler, job_id):
+            with self._unlock_on_exit(scheduler, job_id):
                 self._wait_to_run_job(scheduler, job_id, delay)
 
         print("Done")
@@ -93,19 +93,16 @@ class Runner:
         self._stop_ev.set()
 
     @contextmanager
-    def _failsafe_unlock(self, scheduler: Scheduler, job_id: int) -> Iterator[None]:
-        # In case an error occurs, unlock the job.
+    def _unlock_on_exit(self, scheduler: Scheduler, job_id: int) -> Iterator[None]:
+        # Once the job is done or an error occurs, unlock the job.
         #
-        # Yes, this is a bit confusing to think about and is still
-        # not entirely fool-proof since it allows for a gap between
+        # This is not entirely fool-proof since it allows for a gap between
         # the lock call and when this context manager is reached.
         # In other words, the API limits us from being fully failsafe.
         try:
             yield
-        except BaseException:
-            print(f"Failsafe! Unlocking job #{job_id}")
+        finally:
             scheduler.unlock_job(job_id)
-            raise
 
     def _wait_to_run_job(self, scheduler: Scheduler, job_id: int, delay: float) -> None:
         if delay > 0:
