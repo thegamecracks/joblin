@@ -200,7 +200,7 @@ class Scheduler:
 
         c = self.conn.execute(
             "SELECT * FROM job WHERE completed_at IS NULL "
-            "AND (expires_at IS NULL OR ? < expires_at)"
+            "AND (expires_at IS NULL OR ? < expires_at) "
             "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
@@ -236,7 +236,7 @@ class Scheduler:
 
         c = self.conn.execute(
             "SELECT id, starts_at FROM job WHERE completed_at IS NULL "
-            "AND (expires_at IS NULL OR ? < expires_at)"
+            "AND (expires_at IS NULL OR ? < expires_at) "
             "ORDER BY starts_at, id LIMIT 1",
             (now,),
         )
