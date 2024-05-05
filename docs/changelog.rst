@@ -55,7 +55,7 @@ Changed
   desired to know how overdue a job is, users will have to do
   ``job.starts_at - queue.time()`` instead.
 - :meth:`Queue.get_next_job() <joblin.Queue.get_next_job>`
-  and :meth:`Queue.get_seconds_until_next_job() <joblin.Queue.get_seconds_until_next_job>`
+  and :meth:`Queue.get_next_job_delay() <joblin.Queue.get_next_job_delay>`
   are now guaranteed to return the job with the smaller ID if two jobs
   started at the same time. Previously this was not part of the database
   query, making the ordering reliant on SQLite's implementation details.
