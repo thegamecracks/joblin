@@ -17,6 +17,9 @@ class Queue:
 
         queue = Queue.connect("job.db")
         job = queue.add_job("Some payload")
+        job = queue.get_next_job()
+        if job is not None:
+            job.complete()
         queue.close()
 
     This class does not directly provide a mechanism for executing jobs,
@@ -60,6 +63,11 @@ class Queue:
     ) -> Self:
         """Connect and set up an SQLite database at the given path.
 
+        ::
+
+            with Queue.connect("job.db") as queue:
+                ...
+
         ``:memory:`` can be used instead of a file path to create an
         in-memory queue. In this case, it may be desirable to provide
         a monotonic time function to avoid abnormal behaviour from
@@ -93,6 +101,10 @@ class Queue:
         expires_at: float | None = None,
     ) -> Job:
         """Add a job to the queue.
+
+        ::
+
+            job = queue.add_job("Hello world!", created_at=123.45, starts_at=130, expires_at=140)
 
         :param data: The payload to be stored with the job.
         :param created_at:
@@ -144,6 +156,10 @@ class Queue:
     ) -> Job:
         """A convenience method to add a job relative to the current time.
 
+        ::
+
+            job = queue.add_job_from_now("Hello world!", starts_after=10, expires_after=20)
+
         :param data: The payload to be stored with the job.
         :param starts_after:
             The amount of time in seconds after the creation time.
@@ -176,6 +192,10 @@ class Queue:
     def get_job_by_id(self, job_id: int) -> Job | None:
         """Get a job from the queue by ID.
 
+        ::
+
+            job = queue.get_job_by_id(1234)
+
         :param job_id: The ID of the job.
         :returns: A job object, or None if not found.
 
@@ -187,6 +207,10 @@ class Queue:
 
     def get_next_job(self, now: float | None = None) -> Job | None:
         """Get the next job in the queue.
+
+        ::
+
+            job = queue.get_next_job()
 
         If two jobs start at the same time, the job with the
         lower ID gets priority.
@@ -217,6 +241,18 @@ class Queue:
     ) -> tuple[int, float] | None:
         """Get the next job's ID and the amount of time in seconds
         to wait until it starts.
+
+        ::
+
+            job_delay = queue.get_next_job_delay()
+            if job_delay is not None:
+                job_id, delay = job_delay
+
+                time.sleep(delay)
+
+                job = queue.get_job_by_id(job_id)
+                if job is not None:
+                    ...
 
         This reduces unnecessary I/O compared to :meth:`get_next_job()`
         when only the time is needed.
@@ -252,6 +288,10 @@ class Queue:
     def count_pending_jobs(self, now: float | None = None) -> int:
         """Count the number of jobs that need to run.
 
+        ::
+
+            pending = queue.count_pending_jobs()
+
         :param now:
             The current time.
             Defaults to the current time.
@@ -271,6 +311,10 @@ class Queue:
 
     def lock_job(self, job_id: int, *, locked_at: float | None = None) -> bool:
         """Attempt to lock the given job.
+
+        ::
+
+            success = queue.lock_job(1234)
 
         This prevents the job from showing up in subsequent
         :meth:`get_next_job()` calls.
@@ -304,6 +348,18 @@ class Queue:
 
     def lock_next_job(self, now: float | None = None) -> Job | None:
         """Get and lock the next job in the queue.
+
+        ::
+
+            job = queue.lock_next_job()
+            if job is not None:
+                time.sleep(job.delay)
+
+                # In case job got updated or deleted, check again
+                job = queue.get_job_by_id(job.id)
+                if job is not None:
+                    job.complete()
+                    job.unlock()
 
         This should be preferred over manually calling :meth:`get_next_job()`
         and :meth:`lock_job()` as this method will do both in a single
@@ -349,6 +405,19 @@ class Queue:
         """Lock the next job and return its ID and the amount of time
         in seconds to wait until it starts.
 
+        ::
+
+            job_delay = queue.lock_next_job_delay()
+            if job_delay is not None:
+                job_id, delay = job_delay
+
+                time.sleep(delay)
+
+                job = queue.get_job_by_id(job_id)
+                if job is not None:
+                    job.complete()
+                    job.unlock()
+
         This should be preferred over manually calling :meth:`get_next_job()`
         and :meth:`lock_job()` as this method will do both in a single
         transaction, reducing the chance of other connections trying
@@ -392,6 +461,10 @@ class Queue:
     def unlock_job(self, job_id: int) -> bool:
         """Attempt to unlock the given job.
 
+        ::
+
+            success = queue.unlock_job(1234)
+
         Unlike :meth:`lock_job()`, this method returns ``True``
         if job is already unlocked.
 
@@ -411,6 +484,10 @@ class Queue:
 
     def complete_job(self, job_id: int, completed_at: float | None = None) -> bool:
         """Mark the given job as completed.
+
+        ::
+
+            success = queue.complete_job(1234)
 
         If the job does not exist, this is a no-op.
 
@@ -433,6 +510,10 @@ class Queue:
     def delete_job(self, job_id: int) -> bool:
         """Delete a job from the queue by ID.
 
+        ::
+
+            success = queue.delete_job(1234)
+
         :param job_id: The ID of the job.
         :returns: ``True`` if the job existed, ``False`` otherwise.
 
@@ -442,6 +523,10 @@ class Queue:
 
     def delete_completed_jobs(self) -> int:
         """Delete all completed jobs.
+
+        ::
+
+            deleted = queue.delete_completed_jobs()
 
         :param now:
             The current time.
@@ -454,6 +539,10 @@ class Queue:
 
     def delete_expired_jobs(self, now: float | None = None) -> int:
         """Delete all expired jobs.
+
+        ::
+
+            deleted = queue.delete_expired_jobs()
 
         Jobs marked as completed will not be considered as expired.
 
