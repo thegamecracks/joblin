@@ -10,6 +10,9 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
+v0.3.0 (2024-05-05)
+-------------------
+
 Several breaking changes have been introduced in this release.
 
 ``Scheduler`` has been renamed to :class:`~joblin.Queue` to better reflect its purpose.

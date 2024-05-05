@@ -38,7 +38,7 @@ class Job:
     locked_at: float | None
     """The time at which this job was locked, or None if not locked.
 
-    .. versionadded:: unreleased
+    .. versionadded:: 0.3.0
 
     """
 
@@ -89,7 +89,7 @@ class Job:
             Defaults to the current time.
         :returns: ``True`` if the job was locked, ``False`` otherwise.
 
-        .. versionadded:: unreleased
+        .. versionadded:: 0.3.0
 
         """
         return self.queue.lock_job(self.id, locked_at=locked_at)
@@ -107,7 +107,7 @@ class Job:
         :param job_id: The ID of the job.
         :returns: ``True`` if the job was unlocked, ``False`` otherwise.
 
-        .. versionadded:: unreleased
+        .. versionadded:: 0.3.0
 
         """
         return self.queue.unlock_job(self.id)
@@ -118,7 +118,7 @@ class Job:
 
         If the job's start time is overdue, this returns 0.
 
-        .. versionadded:: unreleased
+        .. versionadded:: 0.3.0
 
         """
         return max(0.0, self.starts_at - self.queue.time())
