@@ -46,6 +46,7 @@ Added
 - :meth:`Queue.lock_next_job() <joblin.Queue.lock_next_job>`
 - :meth:`Queue.lock_next_job_delay() <joblin.Queue.lock_next_job_delay>`
 - :meth:`Queue.unlock_job() <joblin.Queue.unlock_job>`
+- :attr:`Job.queue <joblin.Job.queue>` (renamed from ``Job.scheduler``)
 - :attr:`Job.locked_at <joblin.Job.locked_at>`
 - :meth:`Job.lock() <joblin.Job.lock>`
 - :meth:`Job.unlock() <joblin.Job.unlock>`
@@ -71,6 +72,7 @@ Removed
 - ``Scheduler`` (renamed to :class:`~joblin.Queue`)
 - ``Queue.get_seconds_until_next_job()`` in favour of
   :meth:`Queue.get_next_job_delay() <joblin.Queue.get_next_job_delay>`
+- ``Job.scheduler`` (renamed to :attr:`Job.queue <joblin.Job.queue>`)
 - ``Job.get_seconds_until_start()`` in favour of :attr:`Job.delay <joblin.Job.delay>`
 
 v0.2.1 (2024-05-02)
