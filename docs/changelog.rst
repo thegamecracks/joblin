@@ -63,7 +63,7 @@ Removed
   :meth:`Queue.get_next_job_delay() <joblin.Queue.get_next_job_delay>`
 - ``Job.get_seconds_until_start()`` in favour of :attr:`Job.delay <joblin.Job.delay>`
 
-v0.2.1 - 2024-05-02
+v0.2.1 (2024-05-02)
 -------------------
 
 This release includes more documentation enhancements and test coverage.
@@ -77,7 +77,7 @@ Fixed
   This fix mainly applies to users that provide their own time functions
   for the scheduler.
 
-v0.2.0 - 2024-05-01
+v0.2.0 (2024-05-01)
 -------------------
 
 This release provides this documentation site along with a few minor changes.
@@ -89,7 +89,7 @@ Added
 - :meth:`Scheduler.close() <joblin.Scheduler.close>`
   alternative to the context manager protocol
 
-v0.1.1 - 2024-05-01
+v0.1.1 (2024-05-01)
 -------------------
 
 Fixed
@@ -99,7 +99,7 @@ Fixed
   optional as implied by documentation
 - Fix readme example passing a negative delay to :func:`time.sleep()`
 
-v0.1.0 - 2024-05-01
+v0.1.0 (2024-05-01)
 -------------------
 
 This marks the first release of the joblin library, rewritten from the
