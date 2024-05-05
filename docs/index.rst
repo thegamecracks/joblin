@@ -46,7 +46,7 @@ With Python 3.11+ and Git, this library can be installed using:
 
 .. code-block:: shell
 
-   pip install git+https://github.com/thegamecracks/joblin@v0.3.0
+   pip install git+https://github.com/thegamecracks/joblin@v0.3.0.post1
 
 Afterwards you can import ``joblin`` and use the :class:`~joblin.Queue`
 class to start storing jobs.
