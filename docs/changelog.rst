@@ -10,9 +10,13 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
-This release provides preliminary support for locking jobs so that
-multiple workers can concurrently consume jobs from the database.
-However, users must opt into locking with the new methods provided.
+Several breaking changes have been introduced in this release.
+
+``Scheduler`` has been renamed to :class:`~joblin.Queue` to better reflect its purpose.
+
+Preliminary support for locking jobs has been added to allow for
+multiple workers concurrently consuming jobs from the database.
+Users must call the new locking methods to take advantage of this.
 
 This locking mechanism is entirely experimental. For now, the queue
 does not provide a context manager to lock and unlock jobs, which poses
@@ -20,8 +24,6 @@ a risk of leaving jobs deadlocked.
 
 See `examples/thread_pool.py`_ and `examples/threads.py`_ for demonstrations
 of the new API.
-
-``Scheduler`` has been renamed to :class:`~joblin.Queue` to better reflect its purpose.
 
 .. _examples/thread_pool.py: https://github.com/thegamecracks/joblin/blob/main/examples/thread_pool.py
 .. _examples/threads.py: https://github.com/thegamecracks/joblin/blob/main/examples/threads.py
