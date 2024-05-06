@@ -57,7 +57,7 @@ Examples
 Check out the `examples/ <https://github.com/thegamecracks/joblin/tree/main/examples/>`_
 for reference on using the queue:
 
-.. image:: https://raw.githubusercontent.com/thegamecracks/joblin/main/examples/tkinter_app.png
+.. image:: /images/tkinter_app.png
    :target: https://github.com/thegamecracks/joblin/tree/main/examples/tkinter_app.py
 
 License
