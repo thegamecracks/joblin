@@ -10,6 +10,11 @@ The format is based on `Keep a Changelog`_.
 Unreleased
 ----------
 
+v0.3.0.post2 (2024-05-07)
+-------------------------
+
+This post-release contains minor documentation improvements.
+
 v0.3.0.post1 (2024-05-05)
 -------------------------
 
