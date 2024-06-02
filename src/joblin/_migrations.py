@@ -62,7 +62,10 @@ class Migrator:
     def run_migrations(self, migrations: Migrations) -> None:
         version = self.get_version()
         if version >= 0 and not migrations.version_exists(version):
-            log.warning("Unrecognized database version %s, skipping migrations")
+            log.warning(
+                "Unrecognized database version %s, skipping migrations",
+                version,
+            )
             return
 
         with self.begin() as conn:
